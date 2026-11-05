@@ -1,0 +1,484 @@
+================================================================================
+  AI SYNAPSE (AIDASH) - TCS AI JOURNEY INSIGHTS PORTAL
+  Functional Description
+  Version: November 2026 (reporting month Nov-26, FY27)
+================================================================================
+
+CONTENTS
+  1.  Purpose and overview
+  2.  Users, roles and access rules
+  3.  Organisation hierarchy (BG > ISU > Customer)
+  4.  Reporting calendar (FY27, months, quarters)
+  5.  Common screen features (filters, insights, data-gap view)
+  6.  Leaderboard (admins only)
+  7.  AI Service Autonomy
+  8.  Key Deals
+  9.  Customer Touchpoints
+  10. Distinguished Engineers
+  11. Asset Contribution
+  12. Data completeness rules ("Data Incomplete Accounts")
+  13. Lookups
+  14. Hierarchy page
+  15. AI Chat (users only)
+  16. AI Agents (admins only)
+  17. Data storage (local and SQLite Cloud)
+  18. Mobile companion app (Mobile-AIDASH)
+  19. Validation rules summary
+  20. Running the application
+
+
+--------------------------------------------------------------------------------
+1. PURPOSE AND OVERVIEW
+--------------------------------------------------------------------------------
+AI Synapse collects and reports each customer account's progress on its AI journey
+across five areas:
+
+  - AI Service Autonomy      (maturity level L0-L5, profile, assessments, 30-60-90 plan)
+  - Key Deals                (AI opportunities and their outcomes)
+  - Customer Touchpoints     (CXO / VP connects, POCs, workshops, ...)
+  - Distinguished Engineers  (AI engineers / FDEs / test engineers on the account)
+  - Asset Contribution       (reusable AI assets built and contributed)
+
+Account SPOCs enter the data month by month. Leadership sees a running BG-wise
+leaderboard, AI-generated insights and gaps in the data. Two AI features (Claude)
+help with the work:
+  - AI Chat: users add records by chatting with the assistant.
+  - AI Agents: admins get reminder emails drafted for them.
+
+Technology: a Python Flask web application with HTML pages. The data lives in SQLite,
+either in a local file or in SQLite Cloud.
+URL when running locally: http://127.0.0.1:5000
+
+
+--------------------------------------------------------------------------------
+2. USERS, ROLES AND ACCESS RULES
+--------------------------------------------------------------------------------
+Everyone signs in with a username and password (passwords are stored hashed). Role
+and scope are re-read from the database on every page request, so a change to a
+user takes effect immediately.
+
+2.1 Admin users
+  - See every BG, ISU and customer.
+  - Can see the Leaderboard and the AI Agents page.
+  - Can EDIT and DELETE existing records on every data page.
+  - Cannot ADD new records on the data pages; new data is entered by the account
+    users. An admin may only update an existing autonomy profile, not create one.
+  - Manage the Organisation Hierarchy (add, rename, edit SPOCs, delete) and the
+    Lookups.
+
+2.2 Regular users (account SPOCs)
+  - A user sees ONLY the customers whose "AccountAI-SPOC Emp No" in the
+    Organisation Hierarchy equals the user's login ID (employee number). The match
+    ignores case and surrounding spaces.
+  - No Leaderboard. After login, users go to AI Service Autonomy.
+  - Can add, edit and delete records only for their own customers, either on the
+    data pages or through the AI Chat window.
+  - The Hierarchy page shows only the branches that lead to their own customers.
+  - Lookups are read-only.
+  - A user with no assigned customers sees the banner "No customers are assigned
+    to you yet ..." and empty lists.
+  - Opening another customer's record by URL returns an "Access denied - Not one
+    of your customers" page (HTTP 403).
+
+2.3 BG-level and ISU-level limits (optional, per user)
+  - A user account can also be limited to one BG or one ISU. The BG or ISU filter
+    is then pinned, the header shows a "BG: ..." or "ISU: ..." badge, and anything
+    outside it is blocked ("Outside your BG" / "Outside your ISU").
+  - Limiting a user to an ISU implies that ISU's BG.
+  - Renaming a BG or ISU keeps its limited users attached. A BG or ISU that still
+    has limited users cannot be deleted.
+  - If a user's BG or ISU no longer exists, the user is signed out with a message.
+
+2.4 Managing users
+  Users are created from the command line with the add_user function in db.py
+  (options --bg / --isu for a limit, and an admin flag). There is no user
+  management screen.
+
+
+--------------------------------------------------------------------------------
+3. ORGANISATION HIERARCHY
+--------------------------------------------------------------------------------
+  Business Group (BG)  >  Industry Service Unit (ISU)  >  Customer account
+
+  Current data: 10 BGs, 26 ISUs, 131 customers.
+
+Each BG, ISU and customer can record an "AccountAI-SPOC":
+  - SPOC name
+  - SPOC email ID       (must be a valid email format)
+  - SPOC emp no         (4 to 10 digits)
+
+The customer-level SPOC emp no decides which user owns the customer (section 2.2).
+The customer SPOC email is used by the AI Agents as the email recipient, and the
+ISU SPOC email goes in Cc on follow-ups.
+
+Uniqueness: BG names are unique, ISU names are unique across all BGs, and customer
+names are unique within an ISU (all ignoring case).
+
+
+--------------------------------------------------------------------------------
+4. REPORTING CALENDAR
+--------------------------------------------------------------------------------
+  - The financial year is FY27 (April 2026 - March 2027, the TCS fiscal year).
+  - Months run from Apr-26 up to the current month, shown as "Nov-26" etc.
+  - Quarters: Q1 = Apr-Jun, Q2 = Jul-Sep, Q3 = Oct-Dec, Q4 = Jan-Mar (only quarters
+    that have started are offered).
+  - The "current month" is the latest month (today Nov-26). Data completeness and
+    the AI agent reminders are measured against it, and its deadline is the
+    month's last day.
+
+
+--------------------------------------------------------------------------------
+5. COMMON SCREEN FEATURES
+--------------------------------------------------------------------------------
+5.1 Navigation bar
+  Leaderboard (admins) | AI Service Autonomy | Key Deals | Customer Touchpoints |
+  Distinguished Engineers | Asset Contribution | AI Agents (admins) or
+  AI Chat (users) | Lookups | Hierarchy | [user name, Admin / BG / ISU badge, Sign out]
+
+5.2 Filters (on the leaderboard and the data pages)
+  - BG filter, then ISU filter (the ISU list follows the chosen BG).
+  - Quarter filter: FY27 to date, or a single quarter.
+  - Filters are pinned automatically for limited users, and for users whose
+    customers all sit in one BG.
+
+5.3 AI insights
+  Every data page shows the top insights for the current filter scope, computed
+  from the data by rules (no external AI call). Examples:
+    Deals        - win rate, most frequent competitor in lost deals, open pipeline
+                   value (USD M), largest win, month-on-month trend.
+    Touchpoints  - share of CXO-level engagement, top focus area, accounts with
+                   no engagement.
+    Engineers    - scarcest role, concentration by location, accounts without a DE.
+    Assets       - share reaching the TCS core platform, assets still in Ideation /
+                   In development, top contributor.
+    Autonomy     - accounts at L3+ trend, fastest mover, % of accounts below target
+                   level, accounts needing reassessment (none in 90 days), overdue
+                   plan items, AI workshop completion, headcount pending.
+
+5.4 "Data Incomplete Accounts" toggle
+  A red toggle on the data pages narrows the list to the accounts with data gaps in
+  the current month and shows what each one is missing (rules in section 12).
+
+
+--------------------------------------------------------------------------------
+6. LEADERBOARD (route "/", admins only)
+--------------------------------------------------------------------------------
+Shows one running leaderboard per metric, ranked by group, with a compact
+month-on-month table for FY27 (Apr-26 to the current month). The latest month is
+highlighted.
+
+Grouping level
+  - All BGs          -> ranked by BG
+  - One BG selected  -> ranked by ISU within the BG
+  - One ISU selected -> ranked by customer
+
+Boards
+  1. AI Service Autonomy - accounts in L2 (point in time, derived maturity)
+  2. AI Service Autonomy - accounts in L3 (point in time, derived maturity)
+  3. Key Deals - deals won          (by reporting month; FYTD or QTD total)
+  4. Customer Touchpoints           (count by reporting month; FYTD or QTD total)
+  5. Distinguished Engineers        (running headcount, cumulative by month added)
+  6. Assets Contributed             (sum of "number of assets", by month)
+
+Ranking: higher total first, then the latest month. Ties share a rank. Each board
+has a column total row and a KPI figure for the latest month.
+The page also shows the key AI insights for Deals, Engineers and Assets.
+
+
+--------------------------------------------------------------------------------
+7. AI SERVICE AUTONOMY
+--------------------------------------------------------------------------------
+The list shows each account with BG, ISU, profile fields and a month-by-month
+maturity level. Selecting an account opens its editor.
+
+7.1 Profile (one per customer)
+  - Workshop completed       (Yes / No)
+  - Mega AI Journey          (Yes / No)
+  - Headcount band           (Zero / Less than 30 / 30 or more /
+                              Pending business confirmation)
+  - Target level             (L0 - L5)
+  - Target quarter           (text, e.g. Q4 FY27)
+
+7.2 Assessments (history)
+  - Type: Baseline or Reassessment
+  - Date (required), level L0-L5 (required), optional score
+  - MONTHLY MATURITY IS DERIVED, NEVER TYPED: an account's level for a month is the
+    level of its latest assessment on or before that month's last day. Adding an
+    assessment recalculates every month.
+
+7.3 30-60-90 plan items
+  - Item description (required), owner, due date, status
+    (Not started / In progress / Done / Blocked)
+  - The status can be changed inline. Items past their due date and not Done count
+    as overdue in the insights.
+
+7.4 Quick "new entry" form (users)
+  One form can create or fill in the profile, add an assessment and add a plan item
+  for the chosen customer in a single save. Profile fields that already have a
+  value are never blanked out.
+
+Shown at the top: a maturity snapshot (accounts per level) and the top 3 AI
+insights.
+
+
+--------------------------------------------------------------------------------
+8. KEY DEALS  (route /e/deals)
+--------------------------------------------------------------------------------
+Fields
+  Customer (required)                  Opportunity ID
+  Opportunity type (RFP / Proactive proposal / Renewal / New logo)
+  Opportunity / deal name (required)   Status (In progress / RFP submitted /
+                                       Presentation / Negotiation / Won / Lost)
+  Description                          Client context
+  Why past efforts failed              Deal size (Small / Medium / Large / Mega)
+  Deal value (USD M)                   Pursuit lead
+  Focus of pitch & key value propositions
+  What resonated                       What did not resonate / reason for failure
+  Date of entry                        Reporting month
+  Win team                             Competitor
+
+List columns: Opportunity ID, type, deal name, status, value, pursuit lead,
+reporting month, competitor. Records can be edited and deleted.
+
+
+--------------------------------------------------------------------------------
+9. CUSTOMER TOUCHPOINTS  (route /e/touchpoints)
+--------------------------------------------------------------------------------
+Fields
+  Customer (required)
+  Type of engagement (required; from Lookups: CXO connect, VP connect, POC, POT,
+                      POV, Workshop)
+  Reporting month
+  Customer participants
+  TCS participants
+  Key focus areas
+
+
+--------------------------------------------------------------------------------
+10. DISTINGUISHED ENGINEERS  (route /e/engineers)
+--------------------------------------------------------------------------------
+Fields
+  Customer (required)
+  Associate name (required)
+  Employee number (required, UNIQUE across the whole list)
+  Location
+  Role type (from Lookups: AI Engineer, FDE, Test Engineer)
+  Month added
+
+The headcount is cumulative: an engineer counts from the month added onwards.
+
+
+--------------------------------------------------------------------------------
+11. ASSET CONTRIBUTION  (route /e/assets)
+--------------------------------------------------------------------------------
+Fields
+  Customer (required)
+  Asset name (required)
+  Status (from Lookups: Ideation, In development, Ready for use, Deployed, Retired)
+  Description
+  Month of contribution
+  Number of assets contributed
+  Contributor name
+  Contributed to TCS core platform (Yes / No)
+
+
+--------------------------------------------------------------------------------
+12. DATA COMPLETENESS RULES (current month)
+--------------------------------------------------------------------------------
+An account is "data incomplete" if any of the following holds for the current
+month:
+
+AI Service Autonomy
+  - Profile missing, or any of Workshop completed / Mega AI Journey / Headcount
+    band / Target level / Target quarter blank
+  - No assessment on or before the month's end
+  - No 30-60-90 plan items
+  - Plan items without an owner or due date
+
+Key Deals, Customer Touchpoints, Asset Contribution
+  - No record with a reporting / contribution month equal to the current month, or
+  - such records exist but have blank required fields:
+      Deals:       Opportunity ID, type, deal name, status, deal value, pursuit
+                   lead, date of entry, reporting month, competitor
+                   (plus Win team when Won, and "What did not resonate" when Lost)
+      Touchpoints: type, customer participants, TCS participants, focus areas,
+                   reporting month
+      Assets:      asset name, status, month, number of assets, contributor,
+                   core platform
+
+Distinguished Engineers (cumulative)
+  - No engineer added on or before the current month, or engineers with blank
+    name / employee number / location / role type / month added
+
+The same rules feed the "Data Incomplete Accounts" toggle and the AI Agents
+"Follow Up on Missing Info" emails.
+
+
+--------------------------------------------------------------------------------
+13. LOOKUPS  (route /lookups)
+--------------------------------------------------------------------------------
+Centrally managed drop-down values:
+  - Customer touchpoint: type of engagement
+  - Distinguished engineer: role type
+  - Asset contribution: status
+Admins can add and remove values; duplicates are rejected. Removing a value does
+not change existing records, which keep their stored value. Users can only view
+this page.
+
+
+--------------------------------------------------------------------------------
+14. HIERARCHY PAGE  (route /hierarchy)
+--------------------------------------------------------------------------------
+  - A tree of BG > ISU > customers with SPOC name, email and emp no, plus the number
+    of data records per customer. Counts of ISUs and customers are shown.
+  - Admin actions:
+      Add a BG, an ISU (under a BG) or a customer (under an ISU), with optional SPOC
+      details
+      Edit name and SPOC details; rename
+      Delete, with safeguards:
+        BG       - only when it has no ISUs and no users limited to it
+        ISU      - only when it has no customers and no users limited to it
+        Customer - only when it has no data records
+  - Users see only the part of the tree that leads to their own customers.
+
+
+--------------------------------------------------------------------------------
+15. AI CHAT  (route /chat, regular users only)
+--------------------------------------------------------------------------------
+Lets a user add new records by describing them in plain language, for example
+"Add a CXO connect for ABC this month with the CIO, focus on GenAI ops".
+
+How it works
+  1. The user types a message. Claude (model claude-opus-5-5) reads it, can look up
+     the user's own customers, and asks follow-up questions for missing required
+     details.
+  2. Claude prepares a DRAFT: a Deal, Touchpoint, Engineer, Asset, or an Autonomy
+     update (profile fields, an assessment, plan items).
+  3. The draft appears as a card with all fields. The user clicks
+     "Confirm & save" or "Cancel".
+  4. Only on Confirm does the application validate the draft again and write it to
+     the database. Claude itself never writes to the database.
+
+Safeguards
+  - Only the user's own customers can be used; others are refused.
+  - The same validation as the forms applies: required fields, allowed lookup
+    values, month (YYYY-MM) and date (YYYY-MM-DD) formats, unique employee number.
+  - Chat history is kept in memory for the session. "New chat" clears it.
+  - If no Anthropic API key is configured, the page shows a "not configured"
+    banner.
+  - The API key is read from the ANTHROPIC_API_KEY environment variable or from the
+    file anthropic_api_key.txt in the application folder.
+
+
+--------------------------------------------------------------------------------
+16. AI AGENTS  (route /agents, admins only)
+--------------------------------------------------------------------------------
+Three trigger buttons. The agents only DRAFT emails as Notepad (.txt) files on the
+server; NOTHING IS SENT.
+
+16.1 Send Reminder All SPOCs
+  - One general reminder to fill in this month's data across all five sections.
+  - To:      "AccountAI-SPOCs (recipients in Bcc)"
+  - Bcc:     every distinct customer SPOC email in the hierarchy
+  - Body:    reporting month, deadline (month end), the sections, how many accounts
+             are still incomplete, and a sign-off with the admin's name.
+  - File:    aidatafillreminderEmail_<YYYYMMDD_HHMMSS>.txt
+  - Folder:  C:\Users\GenAICHNSIRUSR49\aidash-email\general-reminders
+
+16.2 Sync CRM Data
+  - Placeholder; no action yet. It shows "not configured" until the CRM details are
+    provided.
+
+16.3 Follow Up on Missing Info
+  - One email PER customer SPOC (grouped by SPOC emp no) listing ONLY that SPOC's
+    accounts and exactly what is missing for the current month (rules in
+    section 12).
+  - To:      the customer SPOC email;  Cc: the ISU SPOC email(s)
+  - Greeting uses the SPOC's first name; due date is the month end.
+  - File:    aimissingdata<empid>_<YYYYMMDD_HHMMSS>.txt
+  - Folder:  C:\Users\GenAICHNSIRUSR49\aidash-email\special-reminders
+
+How the AI is used
+  Claude writes the subject and wording once per run, using placeholders. The
+  application fills in all facts (recipients, customer names, missing items,
+  dates) from the database, so an email can never contain an invented gap or
+  address. If the AI is unavailable, a standard template is used and the result is
+  labelled "Standard template" instead of "Drafted by AI".
+
+Page features
+  The result card lists the files created and previews the first email. A "Recent
+  drafts" panel lists earlier files, and any file can be opened in the browser.
+  Only admins can open files, and only simple file names inside the two folders are
+  allowed.
+
+
+--------------------------------------------------------------------------------
+17. DATA STORAGE
+--------------------------------------------------------------------------------
+Tables
+  bg, isu, customer                         organisation hierarchy and SPOCs
+  autonomy, assessment, plan_item           AI Service Autonomy
+  deal, touchpoint, engineer, asset         record-based sections
+  lookup                                    managed drop-down values
+  app_user                                  logins, admin flag, BG / ISU limit
+
+Current volumes (local DB): 131 customers, 130 autonomy profiles,
+326 assessments, 390 plan items, 129 deals, 326 touchpoints, 123 engineers,
+138 assets, 14 lookup values.
+
+Location (db.py, "database location" block)
+  Option 1 - LOCAL SQLite file aidash.db in the application folder   (ACTIVE)
+  Option 2 - SQLite Cloud database "ai-dash" (commented out). It connects over HTTPS
+             (port 443) through cloud_db.py because port 8860 is blocked on this
+             network. The AIDASH_DB_URL environment variable can supply the
+             connection string.
+  To switch, comment out one option and uncomment the other in db.py. Then restart.
+
+SQL scripts for building the cloud database:
+  C:\Users\GenAICHNSIRUSR49\aidash-sql\01_create_tables.sql
+  C:\Users\GenAICHNSIRUSR49\aidash-sql\02_insert_data.sql
+
+
+--------------------------------------------------------------------------------
+18. MOBILE COMPANION APP (Mobile-AIDASH)
+--------------------------------------------------------------------------------
+  - An installable PWA in C:\Users\GenAICHNSIRUSR49\mobile-aidash, served on port
+    8765.
+  - Works offline from an exported data snapshot (export_data.py). Changes made on
+    the phone are applied back with import_changes.py, which supports a dry run.
+  - Applies the same access rules as the web portal: customer ownership by SPOC emp
+    no, BG / ISU limits, and no leaderboard for users.
+
+
+--------------------------------------------------------------------------------
+19. VALIDATION RULES SUMMARY
+--------------------------------------------------------------------------------
+  - Customer must be chosen, and must be in the user's scope, for every record.
+  - Required: Deal name, Engagement type, Associate name, Employee number, Asset
+    name. Autonomy assessments need type, level and date. A plan item needs its
+    description.
+  - Engineer employee number must be unique.
+  - SPOC email must be a valid email; SPOC emp no must be 4-10 digits.
+  - Hierarchy names are unique as described in section 3.
+  - Login redirects only go to pages within the site.
+
+
+--------------------------------------------------------------------------------
+20. RUNNING THE APPLICATION
+--------------------------------------------------------------------------------
+  cd C:\Users\GenAICHNSIRUSR49\aidash-portal
+  pip install -r requirements.txt
+  python app.py            ->  http://127.0.0.1:5000
+
+  Main files:
+    app.py         web application: pages, access rules, leaderboard, completeness
+    db.py          schema, database location, calendar helpers, add_user
+    cloud_db.py    SQLite Cloud HTTPS adapter
+    insights.py    rule-based AI insights
+    chat_ai.py     AI Chat (Claude)
+    agents_ai.py   AI Agents (Claude)
+    templates\     HTML pages
+
+================================================================================
+  End of document
+================================================================================

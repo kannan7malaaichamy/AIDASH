@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en-IN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Order-to-Cash Wave 1 Summary</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one executive sheet. Decision band, numbers strip, D1 and D2 side by side as ledgers of linked rows, measures, then the approval. Same visual family as the full submission page. */
+:root{
+  --bg:#f3f6f7; --surface:#ffffff; --sunk:#e9eef0; --ink:#13212d; --muted:#55636e; --line:#d5dde2;
+  --accent:#0b6f6a; --accent-soft:#dcefed; --panel:#14304a; --on-panel:#f1f6f9; --panel-muted:#b7c8d6; --panel-accent:#7fd8cf;
+  --ok:#1d6f3b; --ok-bg:#e1f2e6; --warn:#8f5a00; --warn-bg:#fbefd9;
+  --f-display:"Source Serif 4", Georgia, "Times New Roman", serif;
+  --f-body:"IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono:"IBM Plex Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0c1319; --surface:#121c24; --sunk:#18242e; --ink:#e4ebef; --muted:#9caab4; --line:#26343f;
+  --accent:#4cc3b8; --accent-soft:#123230; --panel:#173651; --on-panel:#f1f6f9; --panel-muted:#a9bccb; --panel-accent:#7fd8cf;
+  --ok:#6fcf8f; --ok-bg:#15301f; --warn:#f0b450; --warn-bg:#33270f; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0c1319; --surface:#121c24; --sunk:#18242e; --ink:#e4ebef; --muted:#9caab4; --line:#26343f;
+  --accent:#4cc3b8; --accent-soft:#123230; --panel:#173651; --on-panel:#f1f6f9; --panel-muted:#a9bccb; --panel-accent:#7fd8cf;
+  --ok:#6fcf8f; --ok-bg:#15301f; --warn:#f0b450; --warn-bg:#33270f; color-scheme:dark;}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.5;font-variant-numeric:tabular-nums}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);margin:0;line-height:1.2;text-wrap:balance}
+p{margin:0}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:2px}
+.eyebrow{font-family:var(--f-mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.num{font-family:var(--f-mono)}
+
+header .wrap{padding-block:32px 18px;display:grid;gap:8px}
+header h1{font-size:clamp(1.8rem,4vw,2.6rem);font-weight:700;letter-spacing:-.01em}
+.meta{display:flex;flex-wrap:wrap;gap:4px 18px;color:var(--muted);font-size:.88rem}
+.full-link{font-weight:600}
+
+.decision{background:var(--panel);color:var(--on-panel);border-radius:6px;padding:26px 28px;display:grid;grid-template-columns:1.5fr 1fr;gap:24px;align-items:start}
+.decision>*{min-width:0}
+.decision .eyebrow{color:var(--panel-muted)}
+.decision .ask{font-family:var(--f-display);font-size:1.28rem;line-height:1.4;margin-top:6px}
+.decision .ask b{color:var(--panel-accent);font-weight:600}
+.cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.btn{display:inline-flex;align-items:center;gap:6px;font:600 .88rem var(--f-body);padding:9px 15px;border-radius:4px;text-decoration:none;border:1px solid rgba(255,255,255,.35);color:var(--on-panel)}
+.btn.primary{background:var(--panel-accent);border-color:var(--panel-accent);color:#0b2233}
+.btn:hover{border-color:var(--panel-accent)}
+.dates{display:grid;gap:10px;border-left:1px solid rgba(255,255,255,.18);padding-left:22px}
+.dates div{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:baseline}
+.dates b{font-family:var(--f-mono);font-weight:500;color:var(--panel-accent);white-space:nowrap}
+.dates span{font-size:.88rem;color:var(--panel-muted)}
+@media (max-width:760px){.decision{grid-template-columns:1fr;padding:20px}.dates{border-left:0;padding-left:0;border-top:1px solid rgba(255,255,255,.18);padding-top:14px}}
+
+.strip{display:grid;grid-template-columns:repeat(6,1fr);border-top:2px solid var(--ink);border-bottom:1px solid var(--line);margin-top:22px}
+.strip a{display:grid;gap:2px;padding:14px 12px 14px 0;text-decoration:none;color:var(--ink);min-width:0}
+.strip a+a{padding-left:12px;border-left:1px solid var(--line)}
+.strip a:hover .v{color:var(--accent)}
+.strip .v{font-family:var(--f-display);font-size:1.5rem;font-weight:700;line-height:1.15}
+.strip .k{font-size:.78rem;color:var(--muted)}
+@media (max-width:900px){.strip{grid-template-columns:repeat(3,1fr)}.strip a:nth-child(4){padding-left:0;border-left:0}.strip a:nth-child(n+4){border-top:1px solid var(--line)}}
+@media (max-width:480px){.strip{grid-template-columns:repeat(2,1fr)}.strip a{padding-left:0!important;border-left:0!important}.strip a:nth-child(even){padding-left:12px!important;border-left:1px solid var(--line)!important}.strip a:nth-child(n+3){border-top:1px solid var(--line)}}
+
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:34px}
+.cols>section{min-width:0;display:grid;gap:10px;align-content:start}
+@media (max-width:860px){.cols{grid-template-columns:1fr}}
+.dhead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding-bottom:8px;border-bottom:2px solid var(--ink)}
+.dtag{font-family:var(--f-mono);font-size:.72rem;padding:2px 8px;border-radius:3px;background:var(--ink);color:var(--bg)}
+.dtag.d2{background:var(--accent);color:var(--surface)}
+.dhead h2{font-size:1.3rem;font-weight:600}
+.rows{list-style:none;margin:0;padding:0}
+.rows li{display:grid;grid-template-columns:108px 1fr;gap:14px;padding:12px 0;border-bottom:1px solid var(--line)}
+.rows li>*{min-width:0}
+.rows .lbl{font-family:var(--f-mono);font-size:.74rem;letter-spacing:.04em;color:var(--muted);padding-top:2px}
+.rows .h{font-family:var(--f-display);font-size:1.05rem;font-weight:600;line-height:1.3}
+.rows .s{font-size:.86rem;color:var(--muted);margin-top:2px}
+.go{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:6px;font-size:.8rem}
+.go a{text-decoration:none;font-weight:600}
+.go a::after{content:" →"}
+.go a:hover{text-decoration:underline}
+@media (max-width:440px){.rows li{grid-template-columns:1fr;gap:4px}}
+
+.block{margin-top:34px;display:grid;gap:12px}
+.bhead{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.bhead h2{font-size:1.3rem;font-weight:600}
+.tbl{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:.88rem}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.72rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:600;background:var(--sunk)}
+tr:last-child td{border-bottom:0}
+td.t{color:var(--accent);font-weight:600}
+
+.two{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.two>*{min-width:0}
+@media (max-width:860px){.two{grid-template-columns:1fr}}
+.risk{display:grid;gap:8px}
+.risk div{display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start;font-size:.9rem;padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:5px}
+.chip{font-size:.7rem;font-weight:600;padding:2px 8px;border-radius:999px;white-space:nowrap;background:var(--warn-bg);color:var(--warn)}
+.ev{background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:16px;display:grid;gap:8px;align-content:start}
+.ev .lvl{font-family:var(--f-display);font-size:1.25rem;font-weight:700}
+.ev .lvl span{font-family:var(--f-mono);font-size:.75rem;font-weight:500;background:var(--ok-bg);color:var(--ok);padding:2px 8px;border-radius:999px;vertical-align:3px;margin-left:6px}
+.ev ul{margin:0;padding-left:18px;font-size:.88rem;display:grid;gap:3px}
+
+.approve{background:var(--panel);color:var(--on-panel);border-radius:6px;padding:24px 28px;display:grid;gap:14px;margin-top:34px}
+.approve h2{font-size:1.35rem}
+.approve ol{margin:0;padding-left:22px;display:grid;gap:8px}
+.approve li::marker{font-family:var(--f-mono);color:var(--panel-accent)}
+.approve b{color:var(--panel-accent);font-weight:600}
+
+footer .wrap{padding-block:26px 44px;display:grid;gap:10px;color:var(--muted);font-size:.82rem}
+.more{display:flex;flex-wrap:wrap;gap:6px 18px}
+.more a{font-weight:600;text-decoration:none}
+</style>
+
+<style>body{margin:0}</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <span class="eyebrow">Executive summary · AI Fridays S3 · Technology Stream · PS 01</span>
+    <h1>Order-to-Cash Modernization: Wave 1</h1>
+    <div class="meta"><span>5 Nov 2026</span><span>For the CIO and Head of Operations</span><span>Team: [TEAM NAME]</span><a class="full-link" href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX" target="_blank" rel="noopener">Open the full submission →</a></div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="decision" aria-labelledby="h-dec">
+    <div>
+      <span class="eyebrow" id="h-dec">Decision requested today</span>
+      <p class="ask">Approve <b>₹2.50 cr</b> for Wave 1. We put a secure API layer in front of the 12-year-old core, build a read-only pricing and availability service and a new online order intake, and make core releases safer. The core stays the system of record for orders, stock and invoices. <b>₹2.30 cr</b> stays gated.</p>
+      <div class="cta">
+        <a class="btn primary" href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#approve" target="_blank" rel="noopener">Record your decision →</a>
+        <a class="btn" href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#value" target="_blank" rel="noopener">Test the numbers</a>
+        <a class="btn" href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#sim" target="_blank" rel="noopener">Try the rollback simulator</a>
+      </div>
+    </div>
+    <div class="dates" aria-label="Key dates">
+      <div><b>5 Dec 2026</b><span>Day-30 technical go/no-go, before build money is spent</span></div>
+      <div><b>19 Jan 2027</b><span>Day 75: pilot starts at 5% of one region's online orders</span></div>
+      <div><b>3 Feb 2027</b><span>Day 90: formal go/no-go</span></div>
+      <div><b>≤ 15 min</b><span>to roll back any pilot step, pre-approved</span></div>
+    </div>
+  </section>
+
+  <nav class="strip" aria-label="Key numbers">
+    <a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#budget" target="_blank" rel="noopener"><span class="v num">₹2.50 cr</span><span class="k">asked now, of a ₹4.8 cr ceiling</span></a>
+    <a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#budget" target="_blank" rel="noopener"><span class="v num">₹2.30 cr</span><span class="k">gated for Waves 2–3 and contingency</span></a>
+    <a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#budget" target="_blank" rel="noopener"><span class="v num">11 → ≤ 4 wks</span><span class="k">lead time per change, modernized areas</span></a>
+    <a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#failures" target="_blank" rel="noopener"><span class="v num">5 → ≤ 2</span><span class="k">major disruptions a year; 4 of 5 causes fixed in Wave 1</span></a>
+    <a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#budget" target="_blank" rel="noopener"><span class="v num">≈ 2 yrs</span><span class="k">payback on ≈₹1.26 cr a year in margin</span></a>
+    <a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#evidence" target="_blank" rel="noopener"><span class="v">Medium-High</span><span class="k">evidence today; High after the Day-30 gate</span></a>
+  </nav>
+
+  <div class="cols">
+    <section aria-labelledby="h-d1">
+      <div class="dhead"><span class="dtag">D1</span><h2 id="h-d1">Modernization Decision Brief</h2></div>
+      <ul class="rows">
+        <li><span class="lbl">Problem</span><div><p class="h">A slow, fragile core is holding back growth</p><p class="s">11 weeks per change · 5 disruptions a year · 14 interfaces, 6 undocumented</p><div class="go"><a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#today" target="_blank" rel="noopener">Facts</a><a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#failures" target="_blank" rel="noopener">Root causes</a></div></div></li>
+        <li><span class="lbl">Route</span><div><p class="h">Build around the core instead of rewriting it</p><p class="s">Reversible slices; large rewrites average 45% over budget (McKinsey)</p><div class="go"><a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#route" target="_blank" rel="noopener">Route</a></div></div></li>
+        <li><span class="lbl">Wave 1</span><div><p class="h">Four moves; the core stays the system of record</p><p class="s">API layer · read-only pricing · online order intake · safer releases</p><div class="go"><a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#scope" target="_blank" rel="noopener">Scope</a></div></div></li>
+        <li><span class="lbl">Architecture</span><div><p class="h">New services in the cloud; the core stays where it is</p><p class="s">India region · hourly reconciliation · no direct writes to stock or invoices</p><div class="go"><a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#architecture" target="_blank" rel="noopener">Diagram</a><a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#cloud" target="_blank" rel="noopener">Cloud</a></div></div></li>
+        <li><span class="lbl">Compliance</span><div><p class="h">Secure and compliant by design</p><p class="s">GST e-invoicing · 72-month audit trail · DPDP Act 2023</p><div class="go"><a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#security" target="_blank" rel="noopener">Controls</a></div></div></li>
+        <li><span class="lbl">Return</span><div><p class="h">₹2.50 cr now returns ≈₹1.26 cr a year</p><p class="s">Payback ≈ 2 years · costed bottom-up · team of 16</p><div class="go"><a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#budget" target="_blank" rel="noopener">Business case</a></div></div></li>
+        <li><span class="lbl">Risks</span><div><p class="h">Top three, each with a fallback</p><p class="s">Change data capture · safe order path · partner rates</p><div class="go"><a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#risks" target="_blank" rel="noopener">Register</a></div></div></li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="h-d2">
+      <div class="dhead"><span class="dtag d2">D2</span><h2 id="h-d2">90-Day Start &amp; Safe Transition Plan</h2></div>
+      <ul class="rows">
+        <li><span class="lbl">Days 0–30</span><div><p class="h">Discover, then a go/no-go gate</p><p class="s">14 dependencies mapped · 5 checks on 5 Dec · spend ≤ ₹0.30 cr</p><div class="go"><a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#plan" target="_blank" rel="noopener">Plan</a><a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#gate" target="_blank" rel="noopener">Gate</a></div></div></li>
+        <li><span class="lbl">Days 31–60</span><div><p class="h">Build safely, away from live orders</p><p class="s">Non-production build · core release hardening · security review</p><div class="go"><a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#plan" target="_blank" rel="noopener">Plan</a></div></div></li>
+        <li><span class="lbl">Days 61–90</span><div><p class="h">Prove it on live orders</p><p class="s">Shadow → 5% → 15% of one region · go/no-go on 3 Feb</p><div class="go"><a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#plan" target="_blank" rel="noopener">Pilot</a></div></div></li>
+        <li><span class="lbl">Safety net</span><div><p class="h">Back to legacy in 15 minutes</p><p class="s">Zero tolerance for lost orders or invoice errors</p><div class="go"><a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#safety" target="_blank" rel="noopener">Triggers</a></div></div></li>
+        <li><span class="lbl">People</span><div><p class="h">Supported, trained and informed</p><p class="s">Daily stand-up · on-call · branches unaffected</p><div class="go"><a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#people" target="_blank" rel="noopener">Support</a></div></div></li>
+        <li><span class="lbl">Governance</span><div><p class="h">Clear decision rights</p><p class="s">CIO: budget and go/no-go · Head of Operations: each ramp step</p><div class="go"><a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#governance" target="_blank" rel="noopener">RACI</a></div></div></li>
+        <li><span class="lbl">After Day 90</span><div><p class="h">Two more waves, each released only at a gate</p><p class="s">Pricing engine ₹0.90 cr · stock service ₹0.70 cr</p><div class="go"><a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#roadmap" target="_blank" rel="noopener">Roadmap</a></div></div></li>
+      </ul>
+    </section>
+  </div>
+
+  <section class="block" aria-labelledby="h-kpi">
+    <div class="bhead"><h2 id="h-kpi">Four measures, reviewed monthly</h2><a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#kpis" target="_blank" rel="noopener">Measure detail →</a></div>
+    <div class="tbl"><table>
+      <thead><tr><th>Measure</th><th>Baseline</th><th>90 days</th><th>12 months</th><th>Owner</th></tr></thead>
+      <tbody>
+        <tr><td>Change lead time</td><td class="num">11 weeks</td><td>First modernized change in ≤ 4 weeks</td><td class="t">Median ≤ 4 wks modernized; ≤ 6 overall</td><td>Head of Engineering</td></tr>
+        <tr><td>Major release disruptions</td><td class="num">5 in 12 months</td><td>0 caused by modernization</td><td class="t">≤ 2 a year</td><td>Head of Operations</td></tr>
+        <tr><td>Transaction correctness</td><td>Set by Day 30</td><td>0 lost or duplicated; ≥ 99.9% reconciled; 100% invoices</td><td class="t">≥ 99.95% across modernized flows</td><td>Finance Controller</td></tr>
+        <tr><td>Spend vs plan</td><td class="num">₹0 of ₹4.8 cr</td><td>≤ ₹0.9 cr, within ±10%</td><td class="t">Wave 1 within ₹2.50 cr</td><td>CIO + Finance</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <div class="two block">
+    <section class="risk" aria-labelledby="h-if">
+      <div class="bhead"><h2 id="h-if">If the pilot underperforms</h2></div>
+      <div><span class="chip">Keep</span><span>The facade and read-only service, which still give digital channels faster, safer data.</span></div>
+      <div><span class="chip">Pause</span><span>Order intake. Root-cause review, then one re-attempt within 30 days.</span></div>
+      <div><span class="chip">Stop</span><span>No gated money released. ₹2.30 cr stays unspent.</span></div>
+      <div><span class="chip">Re-plan</span><span>A revised route comes back to the CIO before any further spend.</span></div>
+    </section>
+    <section class="ev" aria-labelledby="h-ev">
+      <span class="eyebrow">Strength of evidence</span>
+      <p class="lvl" id="h-ev">Medium-High <span>High by 5 Dec</span></p>
+      <ul>
+        <li>The six starting facts from the case are unchanged.</li>
+        <li>The route, delivery targets, margin and compliance rest on cited research and Indian regulation.</li>
+        <li>Company-specific estimates are labelled, each with an owner and a confirmation date.</li>
+        <li>Where a benchmark was weaker than our estimate (margin 8% → 5%), we used the benchmark.</li>
+      </ul>
+      <div class="go"><a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#evidence" target="_blank" rel="noopener">Evidence register</a><a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#benchmarks" target="_blank" rel="noopener">Benchmarks &amp; sources</a></div>
+    </section>
+  </div>
+
+  <section class="approve" aria-labelledby="h-ap">
+    <span class="eyebrow" style="color:var(--panel-muted)">What you are approving today</span>
+    <h2 id="h-ap">Five points</h2>
+    <ol>
+      <li><b>Strangler route, not a rewrite.</b> The legacy core stays the system of record for orders, stock and invoices in Wave 1.</li>
+      <li><b>₹2.50 cr for Wave 1 now,</b> including skills and cloud run. Wave 2 (₹0.90 cr), Wave 3 (₹0.70 cr) and contingency (₹0.70 cr) are released only at gates.</li>
+      <li><b>No production change during peak windows,</b> and no live data migration or batch-job change in the first 90 days.</li>
+      <li><b>A reversible pilot:</b> online orders in one region, shadow mode, then a 5% canary with rollback in ≤ 15 minutes.</li>
+      <li><b>Two gates and four measures:</b> technical go/no-go on 5 Dec 2026, monthly reviews, and a formal go/no-go on 3 Feb 2027.</li>
+    </ol>
+    <div class="cta" style="margin-top:4px"><a class="btn primary" href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#approve" target="_blank" rel="noopener">Record your decision →</a></div>
+  </section>
+
+</main>
+
+<footer><div class="wrap">
+  <div class="more">
+    <a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX" target="_blank" rel="noopener">Full submission</a>
+    <a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#compliance" target="_blank" rel="noopener">Requirement map</a>
+    <a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#appendix" target="_blank" rel="noopener">3-minute summary &amp; hard questions</a>
+    <a href="https://claude.ai/artifact/AMUecD8dq3WHkMKEztAWSX#ailog" target="_blank" rel="noopener">How we used AI</a>
+  </div>
+  <p>All scenario figures are illustrative exercise inputs. Assumptions and synthetic examples are labelled in the full submission. No real customer, employee, source-code or credential data is used.</p>
+</div></footer>
+
+</body>
+</html>

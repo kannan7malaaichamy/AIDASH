@@ -1,0 +1,1102 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Northwind Cloud Estate</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: architecture-review workbook. Sticky tab bar, one view per tab, each view = summary strip, diagram, detail table. */
+:root{
+  --bg:#f3f5f8; --panel:#ffffff; --panel2:#eaeef4; --fg:#161d29; --mute:#586275; --line:#d3d9e3;
+  --aws:#b45f06; --az:#2563c9; --gcp:#1b8556; --warn:#c23a2b; --warn-soft:#f6d9d4; --ok:#1b8556;
+  --on-cloud:#ffffff; --focus:#2563c9;
+  --font:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif; --mono:'IBM Plex Mono',ui-monospace,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1520; --panel:#171f2d; --panel2:#1f2938; --fg:#e6ebf3; --mute:#9aa6ba; --line:#2d394d;
+  --aws:#e39a3b; --az:#6a9bf0; --gcp:#4cc08a; --warn:#f0705f; --warn-soft:#3b2220; --ok:#4cc08a; --on-cloud:#0e1520; --focus:#8ab1f5; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1520; --panel:#171f2d; --panel2:#1f2938; --fg:#e6ebf3; --mute:#9aa6ba; --line:#2d394d;
+  --aws:#e39a3b; --az:#6a9bf0; --gcp:#4cc08a; --warn:#f0705f; --warn-soft:#3b2220; --ok:#4cc08a; --on-cloud:#0e1520; --focus:#8ab1f5; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:14px;line-height:1.5;margin:0}
+.wrap{max-width:1200px;margin:0 auto;padding-block:20px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1{font-size:26px;line-height:1.2;margin:0 0 4px;font-weight:600;text-wrap:balance}
+h2{font-size:18px;margin:0 0 4px;font-weight:600;text-wrap:balance}
+h3{font-size:13px;margin:0 0 8px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--mute)}
+p{margin:0 0 8px;max-width:70ch}
+.sub{color:var(--mute);max-width:75ch}
+.tag{font-family:var(--mono);font-size:11px;color:var(--mute);letter-spacing:.04em}
+header{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:flex-end;margin-bottom:16px}
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);border-bottom:1px solid var(--line);margin-bottom:20px;overflow-x:auto;display:flex;gap:4px}
+nav button{font:inherit;font-weight:500;background:none;border:0;color:var(--mute);padding:10px 14px;cursor:pointer;white-space:nowrap;border-bottom:3px solid transparent}
+nav button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--fg)}
+button:focus-visible,.chip:focus-visible,.cap:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.view[hidden]{display:none}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px 14px;min-width:0}
+.stat b{display:block;font-size:24px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2}
+.stat span{color:var(--mute);font-size:12px}
+.stat.bad{border-color:var(--warn)}.stat.bad b{color:var(--warn)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px;margin-bottom:16px}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:16px;min-width:0}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:13px}
+th{text-align:left;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--mute);font-weight:500;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono)}
+tr:last-child td{border-bottom:0}
+.dot{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:6px;vertical-align:baseline}
+.aws{--c:var(--aws)}.az{--c:var(--az)}.gcp{--c:var(--gcp)}
+.dot.aws{background:var(--aws)}.dot.az{background:var(--az)}.dot.gcp{background:var(--gcp)}
+.dot.un{background:repeating-linear-gradient(45deg,var(--warn) 0 2px,transparent 2px 4px);border:1px solid var(--warn)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:12px;color:var(--mute);margin:8px 0 0}
+.bar{display:flex;height:22px;background:var(--panel2);border-radius:3px;overflow:hidden}
+.bar i{display:block;height:100%}
+.bar .al{background:var(--c)}
+.bar .un{background:repeating-linear-gradient(45deg,var(--warn) 0 3px,var(--warn-soft) 3px 6px)}
+.row{display:grid;grid-template-columns:110px 1fr 120px;gap:10px;align-items:center;margin-bottom:10px}
+.row.sm{grid-template-columns:minmax(0,170px) 1fr 70px;margin-bottom:6px}
+.row .lab{font-size:13px;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.row .val{font-family:var(--mono);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+.pill{display:inline-block;font-size:11px;padding:1px 7px;border-radius:10px;border:1px solid var(--line);background:var(--panel2);white-space:nowrap}
+.pill.bad{border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
+.pill.c{border-color:var(--c);color:var(--fg)}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:12px;text-align:left;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-left:4px solid var(--c);border-radius:4px;padding:4px 8px;cursor:pointer}
+.chip small{color:var(--mute);font-family:var(--mono);font-size:10px;margin-right:4px}
+.chip.sel{background:var(--panel2);border-color:var(--fg);border-left-color:var(--c)}
+.chip.dim{opacity:.25}
+.layer{display:grid;grid-template-columns:150px 1fr;gap:12px;padding:12px 0;border-bottom:1px dashed var(--line)}
+.layer:last-child{border-bottom:0}
+.layer h4{margin:0;font-size:13px;font-weight:600}.layer h4 span{display:block;font-weight:400;color:var(--mute);font-size:11px}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;align-items:center}
+.f{font:inherit;font-size:12px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:14px;padding:3px 12px;cursor:pointer}
+.f[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+.detail{background:var(--panel2);border-radius:6px;padding:12px 14px;margin-top:12px;min-height:60px}
+.detail dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:6px 16px;margin:8px 0 0}
+.detail dt{font-size:11px;color:var(--mute);text-transform:uppercase;letter-spacing:.05em}.detail dd{margin:0;font-weight:500}
+.vs{margin-bottom:14px}
+.vs h4{margin:0 0 6px;font-size:13px}
+.stages{display:flex;flex-wrap:wrap;gap:4px}
+.stage{flex:1 1 120px;min-width:0;background:var(--panel2);padding:6px 12px 6px 14px;font-size:12px;clip-path:polygon(0 0,calc(100% - 10px) 0,100% 50%,calc(100% - 10px) 100%,0 100%,8px 50%)}
+.stage b{display:block;font-weight:500}.stage span{font-family:var(--mono);color:var(--mute);font-size:11px}
+.dom{margin-bottom:14px}
+.dom h4{display:flex;justify-content:space-between;gap:8px;margin:0 0 6px;font-size:13px}
+.dom h4 span{font-family:var(--mono);font-weight:400;color:var(--mute);font-size:12px}
+.caps{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.cap{font:inherit;text-align:left;border:1px solid var(--line);border-radius:4px;padding:8px 10px;cursor:pointer;color:var(--fg);background:linear-gradient(var(--heat),var(--heat)),var(--panel);min-width:0}
+.cap{--heat:color-mix(in srgb,var(--az) calc(var(--h)*45%),transparent)}
+.cap.sel{border-color:var(--fg);outline:1px solid var(--fg)}
+.cap b{display:block;font-weight:500;font-size:13px}.cap span{font-family:var(--mono);font-size:11px;color:var(--mute)}
+.mx td.n.hot{background:color-mix(in srgb,var(--az) calc(var(--h)*40%),transparent)}
+.svgbox{overflow-x:auto}
+.svgbox svg{width:100%;min-width:760px;height:auto;display:block}
+svg text{font-family:var(--font);fill:var(--fg)}
+svg .m{fill:var(--mute)}
+svg .bx{fill:var(--panel);stroke:var(--line)}
+svg .hd{fill:var(--c)}
+svg .hdt{fill:var(--on-cloud);font-weight:600}
+svg .ln{stroke:var(--mute);stroke-width:1.5;fill:none}
+svg .un{fill:url(#hatch);stroke:var(--warn)}
+.pb{display:flex;gap:10px;align-items:baseline;margin:28px 0 12px;padding-top:16px;border-top:2px solid var(--fg)}
+.pb:first-of-type{margin-top:0}
+.pb .no{font-family:var(--mono);font-size:12px;background:var(--fg);color:var(--bg);padding:1px 8px;border-radius:3px;flex:none}
+.pb h2{margin:0}
+.gantt{position:relative;height:22px;background:var(--panel2);border-radius:3px}
+.gantt i{position:absolute;top:2px;height:11px;background:var(--warn);border-radius:2px}
+.gantt u{position:absolute;top:14px;height:5px;background:var(--ok);border-radius:2px;text-decoration:none}
+.row.g{grid-template-columns:minmax(0,190px) 1fr 90px}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-bottom:14px}
+.kpi .stat small{display:block;color:var(--ok);font-family:var(--mono);font-size:11px;margin-top:2px}
+svg.lc text{font-size:10px}
+svg.lc .gl{stroke:var(--line);stroke-width:1}
+svg.lc .ls{fill:none;stroke-width:2.2;stroke-linejoin:round}
+svg.lc .lb{font-weight:600;font-size:11px}
+.s-bad{color:var(--warn);font-weight:600}.s-ok{color:var(--ok);font-weight:600}
+.w1{--c:var(--ok)}.w2{--c:var(--az)}.w3{--c:var(--mute)}
+.tri{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px;margin-bottom:16px}
+.tri>div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:14px;min-width:0;border-top:4px solid var(--c)}
+.tri h4{margin:0 0 2px;font-size:14px}.tri .big{font-family:var(--mono);font-size:22px;font-weight:500;display:block;margin:2px 0 6px}
+.tri ul{margin:6px 0 0;padding-left:18px;font-size:13px}.tri li{margin-bottom:3px}
+.f1{--c:var(--warn)}.f2{--c:var(--az)}.f3{--c:var(--ok)}
+.stack{display:grid;gap:6px;margin-bottom:16px}
+.stack>div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:10px 14px}
+.stack .caps5{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-top:8px}
+.stack .caps5 span{background:var(--panel2);border-radius:4px;padding:6px 8px;font-size:12px;font-weight:500}
+.stack .base{background:var(--panel2)}
+.flow{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px;margin-bottom:12px}
+.step{background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--fg);border-radius:6px;padding:10px;font-size:12px;min-width:0}
+.step b{display:block;font-size:13px;margin-bottom:2px}
+.step .d{font-family:var(--mono);margin-top:6px;display:block}
+.step .d s{color:var(--warn)}.step .d em{color:var(--ok);font-style:normal}
+.mock{border:1px solid var(--line);border-radius:8px;background:var(--panel);overflow:hidden}
+.mock .top{background:var(--panel2);padding:8px 12px;font-size:12px;font-family:var(--mono);color:var(--mute)}
+.mock .bd{padding:14px;display:grid;gap:12px}
+.mock .fr{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+.mock label,.calc label{font-size:12px;color:var(--mute);display:block;margin-bottom:2px}
+select{font:inherit;padding:6px 8px;background:var(--panel);color:var(--fg);border:1px solid var(--line);border-radius:4px;width:100%}
+input[type=range]{width:100%;accent-color:var(--az)}
+.out{background:var(--panel2);border-radius:6px;padding:10px 12px;font-size:13px}
+.out ul{margin:4px 0 0;padding-left:18px}
+.hops{display:flex;flex-wrap:wrap;gap:4px;align-items:center;margin:6px 0 12px}
+.hops span{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:3px 8px;font-size:12px}
+.hops span.ok{border-color:var(--ok)}.hops i{color:var(--mute);font-style:normal}
+.hc{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.hc div{background:var(--panel2);border-radius:4px;padding:8px}.hc b{display:block;font-family:var(--mono);font-size:16px}.hc span{font-size:11px;color:var(--mute)}
+.gx{min-width:720px}
+.gx .hdr,.gx .rw{display:grid;grid-template-columns:150px 1fr;gap:8px;align-items:center}
+.gx .wk{display:grid;grid-template-columns:repeat(13,1fr);font-size:10px;color:var(--mute);text-align:center;font-family:var(--mono)}
+.gx .rw{margin-top:6px;font-size:12px;font-weight:500}
+.gx .trk{position:relative;height:28px;background:repeating-linear-gradient(90deg,var(--panel2) 0 calc(100%/13 - 1px),var(--bg) calc(100%/13 - 1px) calc(100%/13))}
+.gx .b3{position:absolute;top:3px;height:22px;border-radius:3px;font-size:11px;font-weight:400;padding:3px 6px;color:var(--on-cloud);overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.gx .p1{background:var(--az)}.gx .p2{background:var(--gcp)}.gx .p3{background:var(--aws)}
+.gx .frz{position:absolute;top:0;bottom:0;background:repeating-linear-gradient(45deg,var(--warn) 0 2px,transparent 2px 6px);opacity:.4}
+.gx .cpl{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--fg)}
+.cpb{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.ind{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;margin-bottom:14px}
+.ind>div{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:12px;min-width:0}
+.ind b.v{display:block;font-family:var(--mono);font-size:26px;font-weight:500;line-height:1.2}
+.ind .nm{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--mute)}
+.ind .pg{height:6px;background:var(--panel2);border-radius:3px;margin:8px 0 6px;overflow:hidden}.ind .pg i{display:block;height:100%;background:var(--ok)}
+.ind small{display:block;color:var(--mute);font-size:11px}
+.crit li{margin-bottom:4px}
+.cc{border-left:4px solid var(--warn);padding-left:14px;margin-bottom:6px}
+.cc .q{font-style:normal;color:var(--mute);font-size:13px}
+.note{border-left:3px solid var(--warn);background:var(--panel2);padding:8px 12px;margin:12px 0;font-size:13px}
+.good{border-left-color:var(--ok)}
+@media (max-width:600px){.layer{grid-template-columns:1fr}.row{grid-template-columns:70px 1fr 90px}.row.sm{grid-template-columns:110px 1fr 56px}}
+@media (prefers-reduced-motion:no-preference){.bar i{transition:width .4s}}
+</style>
+
+<div class="wrap">
+<header>
+  <div>
+    <div class="tag">SYNTHETIC DATA · NORTHWIND ENTERPRISES · NOV 2026</div>
+    <h1>Northwind multi-cloud estate</h1>
+    <p class="sub">46 business applications, 22 delivery teams and 3 cloud providers. Business, application, technology and deployment views of one portfolio, with monthly spend in ₹ lakh (L).</p>
+  </div>
+</header>
+
+<nav role="tablist" id="tabs">
+  <button role="tab" data-v="overview">Estate and spend</button>
+  <button role="tab" data-v="business">Business architecture</button>
+  <button role="tab" data-v="application">Application architecture</button>
+  <button role="tab" data-v="technology">Technology view</button>
+  <button role="tab" data-v="deployment">Deployment architecture</button>
+  <button role="tab" data-v="metrics">Problem metrics</button>
+  <button role="tab" data-v="platform">Platform intent</button>
+  <button role="tab" data-v="brief">Decision brief</button>
+  <button role="tab" data-v="plan">90-day plan</button>
+</nav>
+
+<section class="view" id="v-overview"></section>
+<section class="view" id="v-business"></section>
+<section class="view" id="v-application"></section>
+<section class="view" id="v-technology"></section>
+<section class="view" id="v-deployment"></section>
+<section class="view" id="v-metrics"></section>
+<section class="view" id="v-platform"></section>
+<section class="view" id="v-brief"></section>
+<section class="view" id="v-plan"></section>
+</div>
+
+<script>
+/* ---------- synthetic data ---------- */
+const CL={
+  aws:{n:'AWS',total:38.0,un:9.0,reg:'ap-south-1 Mumbai',dr:'ap-south-2 Hyderabad',org:'Organization · 14 accounts',link:'Direct Connect 2×10 Gbps',hub:'Transit Gateway',unm:'3 accounts with no owner tag'},
+  az:{n:'Azure',total:22.0,un:6.5,reg:'Central India (Pune)',dr:'South India (Chennai)',org:'Tenant · 9 subscriptions',link:'ExpressRoute 2×10 Gbps',hub:'Virtual WAN hub',unm:'2 subscriptions with no owner tag'},
+  gcp:{n:'GCP',total:14.0,un:4.48,reg:'asia-south1 Mumbai',dr:'asia-south2 Delhi',org:'Organization · 17 projects',link:'Partner Interconnect 2×5 Gbps',hub:'Shared VPC + NCC hub',unm:'2 projects with no owner label'}
+};
+const TEAMS=[ // id,name,pipeline,monitoring,access
+['T01','Digital Channels','Jenkins','Datadog','SSO group request'],
+['T02','Customer Care','Azure DevOps','Azure Monitor','ServiceNow ticket'],
+['T03','Loyalty and CRM','GitHub Actions','New Relic','SSO group request'],
+['T04','Marketing Tech','Shell scripts','None (ad hoc)','Shared admin account'],
+['T05','Catalog and Pricing','Jenkins','Datadog','SSO group request'],
+['T06','Order Management','Jenkins','Datadog','SSO group request'],
+['T07','Payments','GitLab CI','New Relic','ServiceNow ticket'],
+['T08','Core Finance','Azure DevOps','Azure Monitor','PIM just-in-time'],
+['T09','Risk and Compliance','GitLab CI','Cloud Monitoring','ServiceNow ticket'],
+['T10','Procurement','Azure DevOps','Azure Monitor','Email to AD admin'],
+['T11','Logistics','AWS CodePipeline','CloudWatch','Manual IAM users'],
+['T12','Warehouse Systems','Shell scripts','New Relic','Shared admin account'],
+['T13','People Systems','Azure DevOps','Azure Monitor','PIM just-in-time'],
+['T14','Talent and Learning','Azure DevOps','Azure Monitor','Email to AD admin'],
+['T15','Data Platform','GitHub Actions','Grafana + Prometheus','SSO group request'],
+['T16','BI and Reporting','Azure DevOps','Azure Monitor','PIM just-in-time'],
+['T17','ML Engineering','GitHub Actions','Cloud Monitoring','SSO group request'],
+['T18','Identity and Access','Shell scripts','Splunk','PIM just-in-time'],
+['T19','Integration','GitHub Actions','Grafana + Prometheus','SSO group request'],
+['T20','Cloud Platform','ArgoCD + Terraform','Grafana + Prometheus','SSO group request'],
+['T21','Observability and SRE','ArgoCD + Terraform','Grafana + Prometheus','SSO group request'],
+['T22','Security Operations','ArgoCD + Terraform','Splunk','PIM just-in-time']];
+const T=Object.fromEntries(TEAMS.map(t=>[t[0],{id:t[0],name:t[1],pipe:t[2],mon:t[3],acc:t[4]}]));
+
+const DOMS=[
+ ['Customer engagement',[['dc','Digital channels'],['cs','Customer service'],['cl','CRM and loyalty'],['mk','Marketing']]],
+ ['Product and orders',[['cat','Catalog and search'],['pr','Pricing'],['oc','Order capture'],['rt','Returns']]],
+ ['Finance and risk',[['pay','Payments'],['rk','Fraud and credit risk'],['gl','Core accounting'],['rg','Regulatory reporting']]],
+ ['Supply chain',[['pc','Procurement'],['lg','Logistics'],['wd','Warehouse and demand']]],
+ ['Workforce',[['hr','Payroll and HR core'],['tl','Talent and learning']]],
+ ['Data and analytics',[['dp','Data platform'],['bi','Analytics and BI'],['ml','ML and AI']]],
+ ['Platform services',[['in','Integration'],['id','Identity and security'],['ep','Engineering platform'],['ob','Observability']]]];
+const CAP={};DOMS.forEach(d=>d[1].forEach(c=>CAP[c[0]]={id:c[0],name:c[1],dom:d[0]}));
+
+// id,name,capability,team,cloud,runtime class,platform,tier,layer,cost weight
+const APPS=[
+[1,'Web Storefront','dc','T01','aws','Kubernetes','EKS · React, Node.js',1,'X',9],
+[2,'Mobile App Backend','dc','T01','aws','Kubernetes','EKS · Kotlin, Spring Boot',1,'X',8],
+[3,'Support Portal','cs','T02','aws','Virtual machines','EC2 Auto Scaling · Java',2,'X',2.5],
+[4,'Loyalty Engine','cl','T03','aws','Serverless','Lambda, DynamoDB · Python',2,'D',2],
+[5,'Product Catalog','cat','T05','aws','Kubernetes','EKS, Aurora · Go',1,'D',6],
+[6,'Dynamic Pricing','pr','T05','aws','Serverless','ECS Fargate · Python',2,'D',3],
+[7,'Order Management','oc','T06','aws','Kubernetes','EKS, Kafka · Java',1,'D',9],
+[8,'Payment Gateway','pay','T07','aws','Kubernetes','EKS, RDS · Java',1,'D',8],
+[9,'Fraud Scoring','rk','T09','aws','Managed ML / data','SageMaker, Lambda · Python',1,'D',5],
+[10,'Shipment Tracking','lg','T11','aws','Serverless','ECS Fargate · Node.js',2,'D',2.5],
+[11,'Warehouse Management','wd','T12','aws','Virtual machines','EC2, RDS · Java',1,'D',4],
+[12,'Route Optimisation','lg','T11','aws','Serverless','Lambda · Python',3,'D',1],
+[13,'Enterprise Data Lake','dp','T15','aws','Managed ML / data','S3, Glue, EMR · Spark',2,'A',6],
+[14,'Streaming Ingest','dp','T15','aws','Managed ML / data','MSK · Kafka',1,'A',5],
+[15,'Recommendation Engine','ml','T17','aws','Kubernetes','EKS, SageMaker · Python',2,'A',4],
+[16,'API Gateway and Mesh','in','T19','aws','Kubernetes','EKS · Envoy',1,'P',3.5],
+[17,'Event Bus','in','T19','aws','Managed ML / data','EventBridge, MSK',1,'P',3],
+[18,'CI/CD Platform','ep','T20','aws','Kubernetes','EKS · ArgoCD, Jenkins',2,'P',2],
+[19,'Central Logging','ob','T21','aws','Managed ML / data','OpenSearch',2,'P',2.5],
+[20,'Secrets and Key Management','id','T22','aws','Managed ML / data','KMS, Vault',1,'P',1.2],
+[21,'Enterprise CRM','cl','T03','az','PaaS','App Service, SQL MI · .NET',2,'D',5],
+[22,'Campaign Manager','mk','T04','az','PaaS','App Service · .NET',3,'X',1.5],
+[23,'Contact Centre Telephony','cs','T02','az','Virtual machines','Azure VMs',2,'X',3],
+[24,'General Ledger','gl','T08','az','Virtual machines','VMs, SQL MI · .NET',1,'D',8],
+[25,'Accounts Payable','gl','T08','az','PaaS','App Service · .NET',2,'D',2.5],
+[26,'Regulatory Reporting','rg','T09','az','Managed ML / data','Data Factory, Synapse',2,'D',3],
+[27,'Procurement Portal','pc','T10','az','PaaS','App Service · .NET',2,'D',2.5],
+[28,'Supplier Onboarding','pc','T10','az','Serverless','Functions, Logic Apps',3,'D',0.8],
+[29,'HR Core and Payroll','hr','T13','az','Virtual machines','Azure VMs, SQL Server',1,'D',6],
+[30,'Learning Platform','tl','T14','az','PaaS','App Service · Node.js',3,'X',1.2],
+[31,'Recruitment Portal','tl','T14','az','PaaS','App Service · Node.js',3,'X',1],
+[32,'Enterprise Data Warehouse','bi','T16','az','Managed ML / data','Synapse · SQL',1,'A',8],
+[33,'BI Dashboards','bi','T16','az','Managed ML / data','Power BI Premium',2,'A',2.5],
+[34,'Workforce Identity','id','T18','az','Managed ML / data','Entra ID, B2C',1,'P',3],
+[35,'Endpoint and Config Mgmt','ep','T20','az','Virtual machines','Azure VMs · Intune',3,'P',1.5],
+[36,'ML Feature Store','ml','T17','gcp','Managed ML / data','Vertex AI, BigQuery',2,'A',3],
+[37,'Customer 360','bi','T16','gcp','Managed ML / data','BigQuery, Looker',1,'A',6],
+[38,'Marketing Attribution','mk','T04','gcp','Serverless','Cloud Run, BigQuery',3,'A',1.5],
+[39,'Personalisation Service','dc','T01','gcp','Kubernetes','GKE · Go',2,'X',3.5],
+[40,'Search and Discovery','cat','T05','gcp','Kubernetes','GKE · Elasticsearch',2,'D',3],
+[41,'Returns and Refunds','rt','T06','gcp','Serverless','Cloud Run · Node.js',3,'D',1],
+[42,'Credit Scoring','rk','T09','gcp','Managed ML / data','Vertex AI · Python',2,'D',3],
+[43,'Demand Forecasting','wd','T12','gcp','Managed ML / data','Vertex AI, BigQuery',2,'D',3.5],
+[44,'Document AI','ml','T17','gcp','Serverless','Cloud Run, Document AI',3,'A',1.2],
+[45,'Cloud Observability','ob','T21','gcp','Kubernetes','GKE · Grafana, Prometheus',2,'P',2],
+[46,'Security Analytics','id','T22','gcp','Kubernetes','GKE · Chronicle',2,'P',2.5]
+].map(a=>({id:a[0],name:a[1],cap:a[2],team:a[3],cloud:a[4],rt:a[5],plat:a[6],tier:a[7],layer:a[8],w:a[9]}));
+
+// scale weights so allocated cost per cloud matches (cloud total − unallocated)
+Object.keys(CL).forEach(k=>{
+  const as=APPS.filter(a=>a.cloud===k),tgt=CL[k].total-CL[k].un,sw=as.reduce((s,a)=>s+a.w,0);
+  let acc=0;as.forEach(a=>{a.cost=Math.round(a.w/sw*tgt*100)/100;acc+=a.cost});
+  const big=as.reduce((m,a)=>a.w>m.w?a:m);big.cost=Math.round((big.cost+tgt-acc)*100)/100;
+});
+const byId=Object.fromEntries(APPS.map(a=>[a.id,a]));
+const sum=(xs,f)=>xs.reduce((s,x)=>s+f(x),0);
+const L=n=>'₹'+n.toFixed(2)+' L';
+const L1=n=>'₹'+n.toFixed(1)+' L';
+const TOTAL=sum(Object.values(CL),c=>c.total),UN=sum(Object.values(CL),c=>c.un),AL=TOTAL-UN;
+const cloudDot=k=>`<span class="dot ${k}"></span>${CL[k].n}`;
+
+const UNBREAK=[['Untagged compute',6.2],['Shared network and egress',3.9],['Orphaned storage and snapshots',3.4],['Dev and test sandboxes',2.9],['Marketplace and licences',1.9],['Accounts with no owner',1.68]];
+const FLOWS=[ // from,to,pattern,GB/day,ms
+[7,24,'Event stream, journal postings',90,38],[8,24,'REST, settlement files',60,41],[14,37,'Kafka topic mirror',420,32],[13,32,'Nightly batch copy',260,45],
+[21,4,'REST, customer sync',40,40],[9,42,'gRPC, score exchange',30,34],[43,11,'Batch, forecast files',15,36],[39,5,'REST, catalog reads',70,33],[36,15,'Feature serving',110,35],[34,16,'OIDC federation',5,30]];
+const COSTPERGB=7.5;
+const flowCost=f=>f[3]*30*COSTPERGB/1e5;
+
+const CATS=['Compute','Storage','Database','Network','Analytics and AI','Other'];
+const CATSPEND={aws:[15.2,5.7,6.1,4.6,4.2,2.2],az:[8.1,2.4,4.4,2.6,2.9,1.6],gcp:[4.2,1.5,1.6,1.8,3.9,1.0]};
+const SERVICES={ // category -> per cloud service names
+ 'Containers':{aws:'EKS, ECS Fargate',az:'AKS (planned)',gcp:'GKE, Cloud Run'},
+ 'Virtual machines':{aws:'EC2',az:'Azure VMs',gcp:'Compute Engine'},
+ 'Serverless':{aws:'Lambda',az:'Functions, Logic Apps',gcp:'Cloud Run functions'},
+ 'Relational DB':{aws:'Aurora, RDS',az:'SQL MI, SQL Server',gcp:'Cloud SQL'},
+ 'Messaging':{aws:'MSK, EventBridge',az:'Service Bus',gcp:'Pub/Sub'},
+ 'Analytics':{aws:'S3, Glue, EMR, OpenSearch',az:'Synapse, Data Factory, Power BI',gcp:'BigQuery, Looker'},
+ 'AI and ML':{aws:'SageMaker',az:'Azure ML (pilot)',gcp:'Vertex AI, Document AI'},
+ 'Identity':{aws:'IAM Identity Center',az:'Entra ID, PIM',gcp:'Cloud Identity, workforce federation'},
+ 'Secrets and keys':{aws:'KMS, Vault',az:'Key Vault',gcp:'Cloud KMS'},
+ 'Infrastructure as code':{aws:'CloudFormation, Terraform',az:'ARM, Bicep, Terraform',gcp:'Terraform, Deployment Manager'}};
+
+/* ---------- helpers ---------- */
+const $=id=>document.getElementById(id);
+const chip=(a,extra='')=>`<button class="chip ${a.cloud} ${extra}" data-app="${a.id}"><small>${String(a.id).padStart(2,'0')}</small>${a.name}</button>`;
+function legendClouds(un){return `<div class="legend">${['aws','az','gcp'].map(k=>`<span>${cloudDot(k)}</span>`).join('')}${un?'<span><span class="dot un"></span>Unallocated</span>':''}</div>`}
+function appDetail(a){
+  const ins=FLOWS.filter(f=>f[1]===a.id).map(f=>byId[f[0]].name),outs=FLOWS.filter(f=>f[0]===a.id).map(f=>byId[f[1]].name);
+  return `<h2>${a.name}</h2><span class="pill c ${a.cloud}">${CL[a.cloud].n}</span> <span class="pill">Tier ${a.tier}</span>
+  <dl><div><dt>Business capability</dt><dd>${CAP[a.cap].name}</dd></div><div><dt>Domain</dt><dd>${CAP[a.cap].dom}</dd></div>
+  <div><dt>Owning team</dt><dd>${T[a.team].name} (${a.team})</dd></div><div><dt>Runtime</dt><dd>${a.rt}</dd></div>
+  <div><dt>Platform</dt><dd>${a.plat}</dd></div><div><dt>Monthly cost</dt><dd>${L(a.cost)}</dd></div>
+  <div><dt>Pipeline</dt><dd>${T[a.team].pipe}</dd></div><div><dt>Monitoring</dt><dd>${T[a.team].mon}</dd></div>
+  <div><dt>Access process</dt><dd>${T[a.team].acc}</dd></div>
+  <div><dt>Cross-cloud inputs</dt><dd>${ins.join(', ')||'None'}</dd></div><div><dt>Cross-cloud outputs</dt><dd>${outs.join(', ')||'None'}</dd></div></dl>`;
+}
+
+/* ---------- overview ---------- */
+function renderOverview(){
+  const mx=Math.max(...Object.values(CL).map(c=>c.total));
+  const cloudRows=Object.keys(CL).map(k=>{const c=CL[k];
+    return `<div class="row ${k}"><div class="lab">${cloudDot(k)}</div><div class="bar" style="width:${c.total/mx*100}%"><i class="al" style="width:${(c.total-c.un)/c.total*100}%"></i><i class="un" style="width:${c.un/c.total*100}%"></i></div><div class="val">${L1(c.total)} · ${Math.round(c.un/c.total*100)}% unalloc.</div></div>`}).join('');
+  const unmx=UNBREAK[0][1];
+  const unRows=UNBREAK.map(u=>`<div class="row sm"><div class="lab">${u[0]}</div><div class="bar"><i class="un" style="width:${u[1]/unmx*100}%"></i></div><div class="val">${L(u[1])}</div></div>`).join('');
+  const top=[...APPS].sort((a,b)=>b.cost-a.cost).slice(0,10),tm=top[0].cost;
+  const topRows=top.map(a=>`<div class="row sm ${a.cloud}"><div class="lab" title="${a.name}">${a.name}</div><div class="bar"><i class="al" style="width:${a.cost/tm*100}%"></i></div><div class="val">${L(a.cost)}</div></div>`).join('');
+  const topShare=sum(top,a=>a.cost)/TOTAL*100;
+  const actions=[
+   ['Deny resource creation without owner, application and cost-centre tags','Cloud Platform (T20)','Attributes ₹5.00 L of untagged compute','6 weeks'],
+   ['Map or close the 7 accounts, subscriptions and projects with no owner','Security Operations (T22)','Attributes ₹1.68 L','3 weeks'],
+   ['Charge shared network and egress back to the source and target app by flow','Integration (T19)','Attributes ₹3.90 L','8 weeks'],
+   ['Delete orphaned disks and snapshots older than 90 days','Cloud Platform (T20)','Saves ₹1.40 L','4 weeks'],
+   ['Auto-shutdown sandboxes outside working hours','Cloud Platform (T20)','Saves ₹1.10 L','2 weeks']];
+  $('v-overview').innerHTML=`
+  <div class="stats">
+    <div class="stat"><b>46</b><span>business applications</span></div>
+    <div class="stat"><b>22</b><span>delivery teams</span></div>
+    <div class="stat"><b>3</b><span>cloud providers</span></div>
+    <div class="stat"><b>${L1(TOTAL)}</b><span>monthly cloud spend</span></div>
+    <div class="stat bad"><b>${Math.round(UN/TOTAL*100)}%</b><span>unallocated, ${L(UN)} with no clear application owner</span></div>
+  </div>
+  <div class="grid2">
+    <div class="box"><h3>Monthly spend by cloud</h3>${cloudRows}${legendClouds(true)}
+      <p class="sub" style="margin-top:12px">Allocated spend of ${L(AL)} maps to 46 applications. Azure carries the highest unallocated share at ${Math.round(CL.az.un/CL.az.total*100)}%.</p></div>
+    <div class="box"><h3>What the ${L(UN)} is</h3>${unRows}
+      <div class="note">Untagged compute and shared network make up half of it. Neither can be traced to an application without tag enforcement and flow-based chargeback.</div></div>
+  </div>
+  <div class="grid2">
+    <div class="box"><h3>Ten largest applications</h3>${topRows}${legendClouds(false)}
+      <p class="sub" style="margin-top:12px">Ten applications carry ${topShare.toFixed(0)}% of total spend. The long tail of 36 applications each costs under ${L(top[9].cost)}.</p></div>
+    <div class="box"><h3>Fragmentation across teams</h3>
+      <table><tbody>
+      <tr><td>Pipeline toolchains</td><td class="n">${new Set(TEAMS.map(t=>t[2])).size}</td></tr>
+      <tr><td>Monitoring tools</td><td class="n">${new Set(TEAMS.map(t=>t[3])).size}</td></tr>
+      <tr><td>Access request processes</td><td class="n">${new Set(TEAMS.map(t=>t[4])).size}</td></tr>
+      <tr><td>Teams on shared admin accounts</td><td class="n">${TEAMS.filter(t=>/Shared/.test(t[4])).length}</td></tr>
+      <tr><td>Teams with no monitoring</td><td class="n">${TEAMS.filter(t=>/None/.test(t[3])).length}</td></tr>
+      </tbody></table>
+      <p class="sub" style="margin-top:8px">Detail by team is in the Technology view.</p></div>
+  </div>
+  <div class="box"><h3>Plan to cut unallocated spend</h3>
+    <div class="scroll"><table><thead><tr><th>Action</th><th>Owner</th><th>Effect</th><th>Duration</th></tr></thead><tbody>
+    ${actions.map(a=>`<tr><td>${a[0]}</td><td>${a[1]}</td><td>${a[2]}</td><td>${a[3]}</td></tr>`).join('')}
+    </tbody></table></div>
+    <div class="note good">After these five actions about ₹6.9 L of the ₹71.5 L bill stays unallocated, which is 9.7% against 27% today.</div></div>`;
+}
+
+/* ---------- business ---------- */
+function capStats(id){const as=APPS.filter(a=>a.cap===id);return {as,cost:sum(as,a=>a.cost)}}
+function renderBusiness(){
+  const maxCap=Math.max(...Object.keys(CAP).map(id=>capStats(id).cost));
+  const VS=[
+   ['Lead to loyalty',['mk','dc','oc','pay','lg','cl']],
+   ['Order to cash',['oc','pr','rk','pay','wd','gl']],
+   ['Procure to pay',['wd','pc','lg','gl','rg']],
+   ['Hire to retire',['tl','hr','id']]];
+  const vs=VS.map(v=>`<div class="vs"><h4>${v[0]}</h4><div class="stages">${v[1].map(id=>{const s=capStats(id);return `<div class="stage"><b>${CAP[id].name}</b><span>${s.as.length} apps · ${L1(s.cost)}</span></div>`}).join('')}</div></div>`).join('');
+  const doms=DOMS.map(d=>{
+    const ids=d[1].map(c=>c[0]),as=APPS.filter(a=>ids.includes(a.cap)),teams=new Set(as.map(a=>a.team)).size;
+    return `<div class="dom"><h4>${d[0]}<span>${as.length} apps · ${teams} teams · ${L1(sum(as,a=>a.cost))}</span></h4><div class="caps">${d[1].map(c=>{const s=capStats(c[0]);return `<button class="cap" data-cap="${c[0]}" style="--h:${(s.cost/maxCap).toFixed(2)}"><b>${c[1]}</b><span>${s.as.length} apps · ${L1(s.cost)}</span></button>`}).join('')}</div></div>`}).join('');
+  $('v-business').innerHTML=`
+  <div class="box" style="margin-bottom:16px"><h2>Value streams</h2><p class="sub">Four end-to-end streams and the capabilities they pass through. Each step shows how many applications support it and what they cost per month.</p>${vs}</div>
+  <div class="box"><h2>Capability map</h2><p class="sub">7 domains and 26 capabilities. Shading follows monthly cost. Select a capability to see its applications, owning teams and clouds.</p>${doms}
+    <div class="detail" id="capDetail"><p class="sub" style="margin:0">Select a capability.</p></div></div>`;
+  $('v-business').querySelectorAll('.cap').forEach(b=>b.onclick=()=>{
+    $('v-business').querySelectorAll('.cap').forEach(x=>x.classList.toggle('sel',x===b));
+    const s=capStats(b.dataset.cap);
+    $('capDetail').innerHTML=`<h2>${CAP[b.dataset.cap].name}</h2><span class="tag">${CAP[b.dataset.cap].dom.toUpperCase()}</span>
+    <div class="scroll"><table style="margin-top:8px"><thead><tr><th>Application</th><th>Team</th><th>Cloud</th><th>Tier</th><th class="n">Monthly cost</th></tr></thead><tbody>
+    ${s.as.map(a=>`<tr><td>${a.name}</td><td>${T[a.team].name}</td><td>${cloudDot(a.cloud)}</td><td>${a.tier}</td><td class="n">${L(a.cost)}</td></tr>`).join('')}
+    </tbody></table></div>`});
+}
+
+/* ---------- application architecture ---------- */
+const LAYERS=[['X','Experience','Channels and user-facing apps'],['D','Business services','Domain systems and decisioning'],['A','Data and intelligence','Pipelines, warehouse, ML'],['P','Shared platform','Integration, identity, engineering, observability']];
+let appFilter={aws:true,az:true,gcp:true},appSel=null;
+function renderApplication(){
+  const on=a=>appFilter[a.cloud];
+  const layers=LAYERS.map(l=>{
+    const as=APPS.filter(a=>a.layer===l[0]);
+    return `<div class="layer"><h4>${l[1]}<span>${l[2]}</span></h4><div class="chips">${as.map(a=>chip(a,(on(a)?'':'dim ')+(appSel===a.id?'sel':''))).join('')}</div></div>`}).join('');
+  const flowRows=FLOWS.map(f=>{const a=byId[f[0]],b=byId[f[1]];return `<tr><td>${chip(a)}</td><td>${chip(b)}</td><td>${f[2]}</td><td class="n">${f[3]}</td><td class="n">${f[4]}</td><td class="n">${flowCost(f).toFixed(2)}</td></tr>`}).join('');
+  const totGB=sum(FLOWS,f=>f[3]),totC=sum(FLOWS,flowCost);
+  $('v-application').innerHTML=`
+  <div class="box"><h2>Application landscape</h2>
+    <p class="sub">All 46 applications by architecture layer. The border colour shows which cloud hosts each one. Select an application for its owner, platform, cost and cross-cloud links.</p>
+    <div class="filters"><span class="tag">SHOW</span>${['aws','az','gcp'].map(k=>`<button class="f" aria-pressed="${appFilter[k]}" data-cf="${k}">${CL[k].n} (${APPS.filter(a=>a.cloud===k).length})</button>`).join('')}</div>
+    ${layers}
+    <div class="detail" id="appDetail">${appSel?appDetail(byId[appSel]):'<p class="sub" style="margin:0">Select an application.</p>'}</div></div>
+  <div class="box" style="margin-top:16px"><h2>Cross-cloud integrations</h2>
+    <p class="sub">Ten flows cross a cloud boundary. They move ${totGB.toLocaleString()} GB per day and add about ${L(totC)} a month in egress at ₹${COSTPERGB} per GB. None is charged back to the applications that cause it.</p>
+    <div class="scroll"><table><thead><tr><th>From</th><th>To</th><th>Pattern</th><th class="n">GB/day</th><th class="n">Latency ms</th><th class="n">Egress ₹ L/mo</th></tr></thead><tbody>${flowRows}</tbody></table></div></div>`;
+  const root=$('v-application');
+  root.querySelectorAll('[data-cf]').forEach(b=>b.onclick=()=>{appFilter[b.dataset.cf]=!appFilter[b.dataset.cf];renderApplication()});
+  root.querySelectorAll('[data-app]').forEach(b=>b.onclick=()=>{appSel=+b.dataset.app;renderApplication();$('appDetail').scrollIntoView({block:'nearest'})});
+}
+
+/* ---------- technology ---------- */
+function renderTechnology(){
+  const rts=['Kubernetes','Virtual machines','PaaS','Serverless','Managed ML / data'];
+  const mxr=Math.max(...rts.map(r=>APPS.filter(a=>a.rt===r).length));
+  const rtRows=rts.map(r=>{const as=APPS.filter(a=>a.rt===r);
+    return `<tr><td>${r}</td>${['aws','az','gcp'].map(k=>{const n=as.filter(a=>a.cloud===k).length;return `<td class="n ${n?'hot':''}" style="--h:${(n/mxr).toFixed(2)}">${n||'·'}</td>`}).join('')}<td class="n">${as.length}</td><td class="n">${L1(sum(as,a=>a.cost))}</td></tr>`}).join('');
+  const maxC=Math.max(...Object.keys(CATSPEND).map(k=>sum(CATSPEND[k],x=>x)));
+  const shade=['1','.8','.62','.46','.32','.2'];
+  const catRows=Object.keys(CATSPEND).map(k=>`<div class="row ${k}"><div class="lab">${cloudDot(k)}</div><div class="bar" style="width:${sum(CATSPEND[k],x=>x)/maxC*100}%">${CATSPEND[k].map((v,i)=>`<i style="width:${v/sum(CATSPEND[k],x=>x)*100}%;background:var(--c);opacity:${shade[i]};border-right:1px solid var(--panel)" title="${CATS[i]} ${L(v)}"></i>`).join('')}</div><div class="val">${L1(CL[k].total)}</div></div>`).join('');
+  const catTable=`<table><thead><tr><th>Category</th>${['aws','az','gcp'].map(k=>`<th class="n">${CL[k].n}</th>`).join('')}</tr></thead><tbody>${CATS.map((c,i)=>`<tr><td>${c}</td>${['aws','az','gcp'].map(k=>`<td class="n">${CATSPEND[k][i].toFixed(1)}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+  const svc=Object.keys(SERVICES).map(s=>`<tr><td>${s}</td>${['aws','az','gcp'].map(k=>`<td>${SERVICES[s][k]}</td>`).join('')}</tr>`).join('');
+  const pipes=[...new Set(TEAMS.map(t=>t[2]))],mons=[...new Set(TEAMS.map(t=>t[3]))],accs=[...new Set(TEAMS.map(t=>t[4]))];
+  const tally=(arr,idx)=>arr.map(x=>`<span class="pill">${x} · ${TEAMS.filter(t=>t[idx]===x).length}</span>`).join(' ');
+  const teamRows=TEAMS.map(t=>{const as=APPS.filter(a=>a.team===t[0]),cl=[...new Set(as.map(a=>a.cloud))];
+    const bad=/Shared|None|Manual/.test(t[3]+t[4]);
+    return `<tr><td>${t[1]}</td><td class="n">${as.length}</td><td>${cl.map(k=>cloudDot(k)).join(' ')}</td><td>${t[2]}</td><td>${/None/.test(t[3])?`<span class="pill bad">${t[3]}</span>`:t[3]}</td><td>${/Shared|Manual/.test(t[4])?`<span class="pill bad">${t[4]}</span>`:t[4]}</td></tr>`}).join('');
+  $('v-technology').innerHTML=`
+  <div class="stats">
+    <div class="stat"><b>${pipes.length}</b><span>pipeline toolchains</span></div>
+    <div class="stat"><b>${mons.length}</b><span>monitoring tools</span></div>
+    <div class="stat"><b>${accs.length}</b><span>access request processes</span></div>
+    <div class="stat"><b>${CL.aws.n}, ${CL.az.n}, ${CL.gcp.n}</b><span>${Object.keys(SERVICES).length} service categories each</span></div>
+  </div>
+  <div class="grid2">
+    <div class="box"><h3>Applications by runtime</h3><div class="scroll mx"><table><thead><tr><th>Runtime</th><th class="n">AWS</th><th class="n">Azure</th><th class="n">GCP</th><th class="n">Apps</th><th class="n">Cost/mo</th></tr></thead><tbody>${rtRows}</tbody></table></div>
+      <p class="sub" style="margin-top:8px">Only 12 applications run on Kubernetes, split across two managed offerings with different cluster versions and ingress setups.</p></div>
+    <div class="box"><h3>Spend by service category (₹ lakh)</h3>${catRows}
+      <div class="legend">${CATS.map((c,i)=>`<span><span class="dot" style="background:var(--fg);opacity:${shade[i]}"></span>${c}</span>`).join('')}</div>
+      <div class="scroll" style="margin-top:10px">${catTable}</div></div>
+  </div>
+  <div class="box" style="margin-bottom:16px"><h3>Services in use per cloud</h3><div class="scroll"><table><thead><tr><th>Category</th><th>${cloudDot('aws')}</th><th>${cloudDot('az')}</th><th>${cloudDot('gcp')}</th></tr></thead><tbody>${svc}</tbody></table></div></div>
+  <div class="box"><h2>Delivery and operations by team</h2>
+    <p class="sub">Each team picked its own deployment scripts, dashboards and way of granting access. Red marks teams with no monitoring, shared admin accounts or manually created users.</p>
+    <p><span class="tag">PIPELINES</span> ${tally(pipes,2)}</p><p><span class="tag">MONITORING</span> ${tally(mons,3)}</p><p><span class="tag">ACCESS</span> ${tally(accs,4)}</p>
+    <div class="scroll"><table><thead><tr><th>Team</th><th class="n">Apps</th><th>Clouds</th><th>Pipeline</th><th>Monitoring</th><th>Access</th></tr></thead><tbody>${teamRows}</tbody></table></div>
+    <div class="note good">Target paved road: one GitOps pipeline pattern, OpenTelemetry into one observability stack, and workforce SSO with just-in-time elevation for every cloud.</div></div>`;
+}
+
+/* ---------- deployment ---------- */
+function renderDeployment(){
+  const g=(k,f)=>APPS.filter(a=>a.cloud===k&&f(a));
+  const cols={aws:20,az:335,gcp:650},W=290;
+  const col=k=>{
+    const c=CL[k],x=cols[k],all=g(k,()=>true),prod=all.length,t1=g(k,a=>a.tier===1).length,t2=g(k,a=>a.tier===2).length,t3=g(k,a=>a.tier===3).length;
+    const shared=g(k,a=>a.layer==='P').length,data=g(k,a=>a.layer==='A').length;
+    const box=(y,h,t1,t2,cls='bx')=>`<rect class="${cls}" x="${x+10}" y="${y}" width="${W-20}" height="${h}" rx="4"/><text x="${x+20}" y="${y+19}" font-size="12" font-weight="600">${t1}</text><text class="m" x="${x+20}" y="${y+36}" font-size="11">${t2}</text>`;
+    return `<g class="${k}">
+      <rect class="bx" x="${x}" y="190" width="${W}" height="392" rx="6"/>
+      <rect class="hd" x="${x}" y="190" width="${W}" height="46" rx="6"/>
+      <text class="hdt" x="${x+12}" y="210" font-size="14">${c.n} · ${c.reg}</text>
+      <text class="hdt" x="${x+12}" y="227" font-size="11" font-weight="400">${c.org}</text>
+      ${box(246,42,c.hub,'Egress firewall, private endpoints, DNS')}
+      ${box(296,58,`Production · ${prod} apps`,`Tier 1: ${t1} · Tier 2: ${t2} · Tier 3: ${t3}`)}
+      ${box(362,42,'Non-production','Dev, test, staging copies of the above')}
+      ${box(412,42,`Shared services · ${shared} apps`,'Integration, identity, CI/CD, observability')}
+      ${box(462,42,`Data platform · ${data} apps`,'Warehouse, lake, ML, streaming')}
+      ${box(512,28,'Unmapped','', 'bx un')}
+      <text x="${x+20}" y="531" font-size="11" class="m" style="fill:var(--warn)">${c.unm}</text>
+      <text class="m" x="${x+20}" y="563" font-size="11">DR: ${c.dr}</text>
+      <text class="m" x="${x+20}" y="576" font-size="10">Warm standby for Tier 1 only</text>
+    </g>`};
+  const ln=(x1,y1,x2,y2)=>`<path class="ln" d="M${x1} ${y1} L${x2} ${y2}"/>`;
+  const svg=`<svg viewBox="0 0 960 596" role="img" aria-label="Deployment topology: corporate network, colocation hub, and three cloud landing zones">
+   <defs><pattern id="hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" style="fill:var(--warn-soft)"/><rect width="2.5" height="6" style="fill:var(--warn)"/></pattern></defs>
+   <rect class="bx" x="300" y="8" width="360" height="52" rx="6"/>
+   <text x="480" y="30" font-size="13" font-weight="600" text-anchor="middle">Corporate network</text>
+   <text class="m" x="480" y="47" font-size="11" text-anchor="middle">HQ, Chennai data centre, 40 branch SD-WAN sites</text>
+   ${ln(480,60,480,90)}
+   <rect class="bx" x="220" y="90" width="520" height="56" rx="6"/>
+   <text x="480" y="112" font-size="13" font-weight="600" text-anchor="middle">Colocation connectivity hub · Mumbai</text>
+   <text class="m" x="480" y="130" font-size="11" text-anchor="middle">Edge routers, firewalls, DNS, NTP · one private path to each cloud</text>
+   ${ln(300,146,165,190)}${ln(480,146,480,190)}${ln(660,146,795,190)}
+   <text class="m" x="60" y="166" font-size="11">${CL.aws.link}</text>
+   <text class="m" x="490" y="170" font-size="11">${CL.az.link}</text>
+   <text class="m" x="690" y="166" font-size="11">${CL.gcp.link}</text>
+   ${['aws','az','gcp'].map(col).join('')}
+  </svg>`;
+  // pipeline x cloud
+  const pipes=[...new Set(TEAMS.map(t=>t[2]))];
+  const mxp=Math.max(...pipes.flatMap(p=>['aws','az','gcp'].map(k=>APPS.filter(a=>a.cloud===k&&T[a.team].pipe===p).length)));
+  const pipeRows=pipes.map(p=>{const tot=APPS.filter(a=>T[a.team].pipe===p).length;
+    return `<tr><td>${p}</td>${['aws','az','gcp'].map(k=>{const n=APPS.filter(a=>a.cloud===k&&T[a.team].pipe===p).length;return `<td class="n ${n?'hot':''}" style="--h:${(n/mxp).toFixed(2)}">${n||'·'}</td>`}).join('')}<td class="n">${tot}</td></tr>`}).join('');
+  const rel=[
+   ['Network','Hub-and-spoke per cloud. Each cloud connects to the colocation hub by its own private link. Cloud-to-cloud traffic hairpins through the hub and is not metered per application.'],
+   ['Resilience','Tier 1 apps (21 of 46) run warm standby in the DR region. Tier 2 and 3 restore from backup, with recovery times from 4 to 24 hours.'],
+   ['Environments','Production, non-production and shared services are separate accounts, subscriptions and projects. The unmapped ones hold the unallocated spend.'],
+   ['Delivery','Seven pipeline patterns push to three control planes. Production access follows six different request processes.']];
+  const tier1=APPS.filter(a=>a.tier===1).length;
+  $('v-deployment').innerHTML=`
+  <div class="box"><h2>Deployment topology</h2>
+    <p class="sub">How the three landing zones connect to the corporate network, and what each one hosts. App counts are taken from the application inventory.</p>
+    <div class="svgbox">${svg}</div></div>
+  <div class="grid2" style="margin-top:16px">
+    <div class="box"><h3>Applications by pipeline and target cloud</h3><div class="scroll mx"><table><thead><tr><th>Pipeline</th><th class="n">AWS</th><th class="n">Azure</th><th class="n">GCP</th><th class="n">Apps</th></tr></thead><tbody>${pipeRows}</tbody></table></div>
+      <p class="sub" style="margin-top:8px">${pipes.filter(p=>['aws','az','gcp'].every(k=>APPS.some(a=>a.cloud===k&&T[a.team].pipe===p))).length} of ${pipes.length} pipeline patterns deploy to all three clouds, and each team wraps its own scripts around them.</p></div>
+    <div class="box"><h3>Deployment characteristics</h3>
+      ${rel.map(r=>`<p><b>${r[0]}.</b> ${r[1].replace('21 of 46',tier1+' of 46')}</p>`).join('')}</div>
+  </div>`;
+}
+
+/* ---------- problem metrics ---------- */
+const MON=['Jun','Jul','Aug','Sep','Oct','Nov'];
+const M={
+ spend:[62,64,66,69,71.5,74], unPct:[24,25,25,26,26,27],
+ onb:[22,21,20,19,18.5,18], groups:[3.4,3.5,3.6,3.7,3.7,3.8], mttr:[4.2,4.4,4.1,4.8,4.5,4.6], inc:[388,401,395,420,409,412],
+ stages:[['Request and approvals',2,0.5],['Architecture and security review',4,1],['Account, network and landing zone',3,0.5],['Access and IAM roles',2,0.25],['Pipeline and IaC build',4,2],['Monitoring and alert setup',1.5,0.25],['Go-live readiness and CAB',1.5,0.5]],
+ grp:[[ '1 group',6,0.4],['2 groups',14,1.1],['3 groups',24,2.3],['4 groups',28,3.8],['5+ groups',28,6.2]],
+ pipe:{'Jenkins':[14,11,3.2],'Azure DevOps':[9,14,4.1],'GitHub Actions':[22,7,1.4],'GitLab CI':[12,9,2.6],'AWS CodePipeline':[6,15,5.0],'Shell scripts':[3,24,8.5],'ArgoCD + Terraform':[28,5,0.9]},
+ acc:{'SSO group request':[6,'Yes'],'PIM just-in-time':[0.5,'Yes'],'ServiceNow ticket':[38,'Partial'],'Email to AD admin':[52,'Partial'],'Manual IAM users':[26,'No'],'Shared admin account':[0,'No']},
+ dash:{'Azure Monitor':41,'Datadog':34,'Grafana + Prometheus':29,'New Relic':22,'Cloud Monitoring':18,'Splunk':16,'CloudWatch':12,'None (ad hoc)':0},
+ inccloud:[['AWS',3.4,4.0,172],['Azure',4.0,5.1,104],['GCP',3.6,4.4,61],['Spans 2+ clouds',5.2,7.8,75]],
+ tags:{'Owner':[79,72,70],'Application':[76,70,68],'Cost centre':[82,75,73],'Environment':[88,81,79]}
+};
+function lineChart(vals,o){
+  const W=360,H=170,pl=34,pr=48,pt=16,pb=24,mn=o.min,mx=o.max,n=vals.length;
+  const X=i=>pl+i*(W-pl-pr)/(n-1),Y=v=>pt+(mx-v)/(mx-mn)*(H-pt-pb);
+  const ticks=[mn,(mn+mx)/2,mx];
+  const pts=vals.map((v,i)=>`${X(i).toFixed(1)},${Y(v).toFixed(1)}`).join(' ');
+  const last=vals[n-1],col=o.col||'var(--warn)';
+  return `<svg class="lc" viewBox="0 0 ${W} ${H}" role="img" aria-label="${o.label}">
+   ${ticks.map(t=>`<line class="gl" x1="${pl}" x2="${W-pr}" y1="${Y(t)}" y2="${Y(t)}"/><text class="m" x="${pl-5}" y="${Y(t)+3}" text-anchor="end">${o.fmt(t)}</text>`).join('')}
+   ${(o.labels||MON).map((m,i)=>`<text class="m" x="${X(i)}" y="${H-7}" text-anchor="middle">${m}</text>`).join('')}
+   <polyline class="ls" stroke="${col}" points="${pts}"/>
+   <circle cx="${X(n-1)}" cy="${Y(last)}" r="4" fill="${col}"/>
+   <text class="lb" x="${X(n-1)+7}" y="${Y(last)+4}" style="fill:${col}">${o.fmt(last)}</text>
+   <text class="m" x="${X(0)}" y="${Y(vals[0])-8}" text-anchor="middle">${o.fmt(vals[0])}</text>
+  </svg>`;
+}
+function renderMetrics(){
+  const onbTot=sum(M.stages,s=>s[1]),onbTgt=sum(M.stages,s=>s[2]);
+  let off=0;
+  const gantt=M.stages.map(s=>{const st=off;off+=s[1];
+    return `<div class="row g"><div class="lab" title="${s[0]}">${s[0]}</div><div class="gantt"><i style="left:${st/onbTot*100}%;width:${s[1]/onbTot*100}%"></i><u style="left:${st/onbTot*100}%;width:${s[2]/onbTot*100}%"></u></div><div class="val">${s[1]} d → ${s[2]} d</div></div>`}).join('');
+  const gm=Math.max(...M.grp.map(g=>g[1]));
+  const wtd=sum(M.grp,(g)=>g[1]/100*[1,2,3,4,5.8][M.grp.indexOf(g)]);
+  const grpRows=M.grp.map(g=>`<div class="row g"><div class="lab">${g[0]}</div><div class="bar"><i style="width:${g[1]/gm*100}%;background:var(--warn)"></i></div><div class="val">${g[1]}% · ${g[2]} h</div></div>`).join('');
+  const pipeRows=Object.keys(M.pipe).map(p=>{const v=M.pipe[p],n=APPS.filter(a=>T[a.team].pipe===p).length,tn=TEAMS.filter(t=>t[2]===p).length;
+    return `<tr><td>${p}</td><td class="n">${tn}</td><td class="n">${n}</td><td class="n">${v[0]}</td><td class="n ${v[1]>=15?'s-bad':''}">${v[1]}%</td><td class="n">${v[2]}</td></tr>`}).join('');
+  const accRows=Object.keys(M.acc).map(p=>{const v=M.acc[p],tn=TEAMS.filter(t=>t[4]===p).length;
+    return `<tr><td>${p}</td><td class="n">${tn}</td><td class="n">${v[0]?v[0]+' h':'n/a'}</td><td>${v[1]==='Yes'?'Per person':`<span class="pill bad">${v[1]==='No'?'No individual trail':'Ticket only'}</span>`}</td></tr>`}).join('');
+  const dm=Math.max(...Object.values(M.dash)),dt=sum(Object.values(M.dash),x=>x);
+  const dashRows=Object.keys(M.dash).map(k=>`<div class="row sm"><div class="lab">${k}</div><div class="bar"><i style="width:${M.dash[k]/dm*100}%;background:var(--az)"></i></div><div class="val">${M.dash[k]}</div></div>`).join('');
+  const incRows=M.inccloud.map(r=>`<tr><td>${r[0]}</td><td class="n">${r[3]}</td><td class="n ${r[1]>=5?'s-bad':''}">${r[1]}</td><td class="n ${r[2]>=7?'s-bad':''}">${r[2]}</td></tr>`).join('');
+  const unL=M.spend.map((s,i)=>s*M.unPct[i]/100);
+  const tagRows=Object.keys(M.tags).map(k=>`<tr><td>${k}</td>${M.tags[k].map(v=>`<td class="n ${v<75?'s-bad':''}">${v}%</td>`).join('')}</tr>`).join('');
+  const SC=[ // metric, baseline, target, status text
+   ['Pipeline toolchains',pipes=>new Set(TEAMS.map(t=>t[2])).size,2,'count'],
+   ['Monitoring tools',()=>new Set(TEAMS.map(t=>t[3])).size,2,'count'],
+   ['Access request processes',()=>new Set(TEAMS.map(t=>t[4])).size,2,'count'],
+   ['Production access with individual, time-bound grants',()=>27,100,'%'],
+   ['New application setup',()=>18,5,'working days'],
+   ['Support groups touched per incident',()=>3.8,1.5,'groups'],
+   ['P1 mean time to resolve',()=>4.6,2.0,'hours'],
+   ['Spend without clear application owner',()=>27,10,'%']];
+  const scRows=SC.map(s=>{const b=s[1](),up=s[2]>b;
+    return `<tr><td>${s[0]}</td><td class="n s-bad">${b}${s[3]==='%'?'%':''}</td><td class="n">${s[2]}${s[3]==='%'?'%':''}</td><td>${s[3]==='%'||s[3]==='count'?'':s[3]}</td></tr>`}).join('');
+  const lc=(v,o)=>`<div>${lineChart(v,o)}</div>`;
+  $('v-metrics').innerHTML=`
+  <div class="note" style="margin-top:0">All figures on this tab are synthetic and consistent with the estate on the other tabs: 46 applications, 22 teams, ${L1(TOTAL)} a month, ${Math.round(UN/TOTAL*100)}% unallocated.</div>
+  <div class="box" style="margin-bottom:8px"><h3>Scorecard: baseline today and 6-month target</h3>
+    <div class="scroll"><table><thead><tr><th>Metric</th><th class="n">Today</th><th class="n">Target</th><th>Unit</th></tr></thead><tbody>${scRows}</tbody></table></div></div>
+
+  <div class="pb"><span class="no">1</span><h2>Scripts, dashboards and access differ across clouds</h2></div>
+  <div class="kpi">
+    <div class="stat bad"><b>${new Set(TEAMS.map(t=>t[2])).size}</b><span>pipeline toolchains for 22 teams</span></div>
+    <div class="stat bad"><b>${dt}</b><span>dashboards in ${Object.keys(M.dash).length-1} tools, an estimated 38% duplicates</span></div>
+    <div class="stat bad"><b>${TEAMS.filter(t=>/Shared|Manual/.test(t[4])).length} teams</b><span>with shared admin accounts or manual IAM users</span></div>
+    <div class="stat"><b>27%</b><span>of production access is individual and time-bound</span></div>
+  </div>
+  <div class="grid2">
+    <div class="box"><h3>Delivery performance by pipeline</h3><div class="scroll"><table><thead><tr><th>Pipeline</th><th class="n">Teams</th><th class="n">Apps</th><th class="n">Deploys/app/mo</th><th class="n">Change fail</th><th class="n">Lead time d</th></tr></thead><tbody>${pipeRows}</tbody></table></div>
+      <p class="sub" style="margin-top:8px">Script-based deploys fail ${(M.pipe['Shell scripts'][1]/M.pipe['ArgoCD + Terraform'][1]).toFixed(1)} times as often as GitOps and take ${(M.pipe['Shell scripts'][2]/M.pipe['ArgoCD + Terraform'][2]).toFixed(0)} times as long to reach production.</p></div>
+    <div class="box"><h3>Access: time to grant by process</h3><div class="scroll"><table><thead><tr><th>Process</th><th class="n">Teams</th><th class="n">Median grant</th><th>Audit trail</th></tr></thead><tbody>${accRows}</tbody></table></div>
+      <p class="sub" style="margin-top:8px">Email-based and ticket-based requests take 38 to 52 hours. Shared and manual accounts are fast and cannot be traced to a person.</p></div>
+  </div>
+  <div class="box"><h3>Dashboards by monitoring tool</h3>${dashRows}</div>
+
+  <div class="pb"><span class="no">2</span><h2>Setup takes 18 working days, incidents cross several groups</h2></div>
+  <div class="kpi">
+    <div class="stat bad"><b>18 days</b><span>to set up a new application</span></div>
+    <div class="stat bad"><b>3.8</b><span>support groups touched per incident</span></div>
+    <div class="stat bad"><b>4.6 h</b><span>P1 mean time to resolve</span></div>
+    <div class="stat"><b>412</b><span>incidents in November</span></div>
+  </div>
+  <div class="grid2">
+    <div class="box"><h3>Where the 18 working days go</h3>${gantt}
+      <div class="legend"><span><span class="dot" style="background:var(--warn)"></span>Today (${onbTot} d)</span><span><span class="dot" style="background:var(--ok)"></span>Target with a self-service template (${onbTgt} d)</span></div>
+      <p class="sub" style="margin-top:10px">Review, pipeline build and landing-zone setup take 11 of the 18 days. Most of the wait is hand-offs between teams, not work.</p></div>
+    <div class="box"><h3>Incidents by number of support groups involved</h3>${grpRows}
+      <div class="legend"><span>Share of incidents · median time to reach the right resolver group</span></div>
+      <p class="sub" style="margin-top:10px">Average ${wtd.toFixed(1)} groups. Incidents that touch four or more groups, 56% of the total, wait 4 to 6 hours just to reach the right resolver.</p></div>
+  </div>
+  <div class="grid2">
+    <div class="box"><h3>Setup time, working days</h3>${lc(M.onb,{min:0,max:24,fmt:v=>v%1?v.toFixed(1):v,label:'New application setup time by month'})}</div>
+    <div class="box"><h3>Support groups per incident</h3>${lc(M.groups,{min:3,max:4,fmt:v=>v.toFixed(1),label:'Support groups per incident by month'})}</div>
+  </div>
+  <div class="grid2">
+    <div class="box"><h3>P1 mean time to resolve, hours</h3>${lc(M.mttr,{min:3,max:6,fmt:v=>v.toFixed(1),label:'P1 mean time to resolve by month'})}</div>
+    <div class="box"><h3>Incident handling by cloud, November</h3><div class="scroll"><table><thead><tr><th>Scope</th><th class="n">Incidents</th><th class="n">Groups</th><th class="n">MTTR h</th></tr></thead><tbody>${incRows}</tbody></table></div>
+      <p class="sub" style="margin-top:8px">Incidents spanning two or more clouds are 18% of volume and take 70% longer than the average. They cross different dashboards and access paths.</p></div>
+  </div>
+
+  <div class="pb"><span class="no">3</span><h2>Cloud charges are hard to trace to an owner</h2></div>
+  <div class="kpi">
+    <div class="stat bad"><b>27%</b><span>of spend with no application owner</span></div>
+    <div class="stat bad"><b>${L(UN)}</b><span>unallocated in November</span></div>
+    <div class="stat bad"><b>4,970</b><span>of 18,420 resources missing a valid owner tag</span></div>
+    <div class="stat bad"><b>3.5 days</b><span>median FinOps effort to name an owner for a charge</span></div>
+  </div>
+  <div class="grid2">
+    <div class="box"><h3>Unallocated share of spend, %</h3>${lc(M.unPct,{min:20,max:30,fmt:v=>Math.round(v)+'%',label:'Unallocated share by month'})}
+      <p class="sub">The share is rising because new accounts and sandboxes launch faster than tagging is enforced.</p></div>
+    <div class="box"><h3>Unallocated spend, ₹ lakh</h3>${lc(unL,{min:10,max:22,fmt:v=>v.toFixed(1),label:'Unallocated spend by month'})}
+      <p class="sub">Total spend grew from ₹62 L to ₹74 L in six months. Unallocated spend grew from ₹${unL[0].toFixed(1)} L to ₹${unL[5].toFixed(1)} L.</p></div>
+  </div>
+  <div class="grid2">
+    <div class="box"><h3>Tag coverage by key and cloud</h3><div class="scroll"><table><thead><tr><th>Required tag</th><th class="n">AWS</th><th class="n">Azure</th><th class="n">GCP</th></tr></thead><tbody>${tagRows}</tbody></table></div>
+      <p class="sub" style="margin-top:8px">Coverage below 75% is marked red. Only 66% of GCP resources carry all four tags.</p></div>
+    <div class="box"><h3>Unallocated spend by cause</h3>${UNBREAK.map(u=>`<div class="row sm"><div class="lab">${u[0]}</div><div class="bar"><i class="un" style="width:${u[1]/UNBREAK[0][1]*100}%"></i></div><div class="val">${L(u[1])}</div></div>`).join('')}
+      <p class="sub" style="margin-top:8px">62% of monthly cost anomaly alerts cannot be attributed to an application within 24 hours.</p></div>
+  </div>`;
+}
+
+/* ---------- platform intent ---------- */
+const WAVE={ // team -> wave
+ T01:1,T10:1,T17:1,T20:1,
+ T03:2,T05:2,T06:2,T07:2,T08:2,T13:2,T15:2,T16:2,T19:2,T21:2,
+ T02:3,T04:3,T09:3,T11:3,T12:3,T14:3,T18:3,T22:3};
+const SPECIALIST=['T09','T15','T17','T18','T22'];
+const CANDS=[ // name, impact on problems 1,2,3 (1-5), reach (1-5), ease (1-5)
+ ['Application owner registry',2,4,4,5,5*0+4+0,'Maps every app and resource to one team. Drives cost allocation and incident routing.'],
+ ['Mandatory tags and team cost view',2,2,5,5,4,'Tags inherited from templates. Monthly cost page per team.'],
+ ['Security defaults',4,3,2,5,3,'Workforce SSO, just-in-time access, secrets vault, build scanning.'],
+ ['Deployment templates',5,4,1,4,3,'Three templates: container, serverless or PaaS, data job.'],
+ ['Observability baseline',4,3,1,5,3,'OpenTelemetry agent, standard alert pack, one incident view per app.'],
+ ['Standard environment vending',4,5,3,4,2,'Account, network and policies created from a request.'],
+ ['Standard database service',2,2,2,3,1,'Managed database patterns and backup policy.'],
+ ['Common Kubernetes platform',3,2,2,2,1,'One cluster standard across EKS and GKE.']
+].map(c=>({n:c[0],i:[c[1],c[2],c[3]],r:c[4],e:c[5],d:c[6],s:(c[1]+c[2]+c[3])/15*40+c[4]/5*20+c[5]/5*40})).sort((a,b)=>b.s-a.s);
+function renderPlatform(){
+  const wv=w=>TEAMS.filter(t=>WAVE[t[0]]===w);
+  const waveStat=w=>{const ts=wv(w).map(t=>t[0]),as=APPS.filter(a=>ts.includes(a.team));return {teams:ts.length,apps:as.length,cost:sum(as,a=>a.cost)}};
+  const ws=[1,2,3].map(waveStat);
+  const WN={1:'Pilot',2:'Second wave',3:'Third wave'};
+  const teamChips=TEAMS.map(t=>`<span class="chip w${WAVE[t[0]]}" style="cursor:default"><small>${t[0]}</small>${t[1]}${SPECIALIST.includes(t[0])?' <span class="pill">specialist</span>':''}</span>`).join(' ');
+  const tierC=k=>{const as=APPS.filter(a=>a.tier===k);return {n:as.length,c:sum(as,a=>a.cost)}};
+  const t1=tierC(1),t2=tierC(2),t3=tierC(3);
+  const caps=[
+   ['Standard environments','Request an account, network and baseline policies from the portal','Setup','Landing-zone step 3 d → 0.5 d'],
+   ['Deployment templates','Three pipeline templates with tests and rollback built in','Fragmentation, setup','Toolchains 7 → 2, pipeline build 4 d → 2 d'],
+   ['Security defaults','Workforce SSO, just-in-time access, secrets vault, build scanning','Fragmentation','Time-bound prod access 27% → 100%'],
+   ['Observability','OpenTelemetry agent, standard alerts, one incident view per app','Triage, fragmentation','Groups per incident 3.8 → 1.5, tools 8 → 2'],
+   ['Cost visibility','Owner registry, inherited tags, monthly cost page per team','Cost ownership','Unallocated 27% → 10%']];
+  const maxS=Math.max(...CANDS.map(c=>c.s));
+  const candRows=CANDS.map(c=>{const band=c.s>=75?['Start now','s-ok']:c.s>=60?['After pilot feedback','']:['Only if 2+ teams ask','s-bad'];
+    return `<tr><td><b>${c.n}</b><br><span class="sub" style="font-size:12px">${c.d}</span></td><td class="n">${c.i.join(' · ')}</td><td class="n">${c.r}</td><td class="n">${c.e}</td><td style="min-width:120px"><div class="bar" style="height:12px"><i style="width:${c.s/maxS*100}%;background:var(--az)"></i></div></td><td class="n">${c.s.toFixed(0)}</td><td class="${band[1]}">${band[0]}</td></tr>`}).join('');
+  const levers=[
+   ['Delete orphaned disks and snapshots','Owner notified, 90-day age rule','All','All','All','All',1.40],
+   ['Shut down sandboxes out of hours','Non-production only','–','–','Yes','Yes',1.10],
+   ['Right-size compute','Tier 1 needs a load test and sign-off','Manual','Test first','Auto','Auto',1.80],
+   ['Commitment discounts on steady load','No capacity or resilience change','Yes','Yes','–','–',2.20]];
+  const totSave=sum(levers,l=>l[6]);
+  const lvRows=levers.map(l=>`<tr><td>${l[0]}<br><span class="sub" style="font-size:12px">${l[1]}</span></td><td>${l[2]}</td><td>${l[3]}</td><td>${l[4]}</td><td>${l[5]}</td><td class="n">${l[6].toFixed(2)}</td></tr>`).join('');
+  const gates=[
+   ['Gate 1','End of month 2','4 pilot teams onboarded · tag coverage ≥ 90% on pilot apps · 6 apps on a template · pilot satisfaction ≥ 3.5 of 5','Stop building new capabilities if missed'],
+   ['Gate 2','End of month 4','14 teams onboarded · setup ≤ 10 days · unallocated ≤ 14% · template opt-out ≤ 25%','Hold chargeback until it is met'],
+   ['Gate 3','End of month 6','22 teams onboarded · setup ≤ 5 days · unallocated ≤ 10% · satisfaction ≥ 4.0 · no Tier 1 SLO breach caused by a cost action','Decide on chargeback for Tier 1']];
+  const phases=[['Thin slice',0,2,'Registry, tags, cost page, one template, 4 pilot teams'],['Learn and widen',2,2,'Security defaults, observability baseline, environment vending, 10 more teams'],['Scale',4,2,'Remaining 8 teams, retire old pipelines and dashboards, chargeback for non-prod']];
+  const gp=phases.map(p=>`<div class="row g"><div class="lab">${p[0]}</div><div class="gantt"><i style="left:${p[1]/6*100}%;width:${p[2]/6*100}%;background:var(--az)"></i></div><div class="val" style="text-align:left">${p[3].split(',')[0]}</div></div>`).join('');
+  $('v-platform').innerHTML=`
+  <div class="note good" style="margin-top:0">Illustrative plan on synthetic data. The platform is deliberately thin: five self-service capabilities, a small fixed rule set, and a rule that nothing new is built until teams ask for it.</div>
+
+  <div class="pb"><span class="no">A</span><h2>Intent of the Head of Technology</h2></div>
+  <div class="grid2">
+    <div class="box"><h3>A shared internal developer platform, built thin</h3>
+      <div class="stack">
+        <div><b>Developers and delivery teams</b><br><span class="sub">22 teams, 46 applications, any of 3 clouds</span></div>
+        <div><b>Portal and catalogue</b> · request, deploy, see cost and incidents for your own app
+          <div class="caps5">${caps.map(c=>`<span>${c[0]}</span>`).join('')}</div></div>
+        <div class="base"><b>Cloud foundations</b> · AWS, Azure, GCP landing zones stay as they are. The platform wraps them and does not replace them.</div>
+      </div></div>
+    <div class="box"><h3>What each capability changes</h3><div class="scroll"><table><thead><tr><th>Capability</th><th>Self-service for teams</th><th>Measure</th></tr></thead><tbody>
+      ${caps.map(c=>`<tr><td><b>${c[0]}</b><br><span class="tag">${c[2].toUpperCase()}</span></td><td>${c[1]}</td><td>${c[3]}</td></tr>`).join('')}</tbody></table></div></div>
+  </div>
+
+  <div class="pb"><span class="no">B</span><h2>Three decisions the platform team must make</h2></div>
+  <div class="box" style="margin-bottom:16px"><h3>1. Which services to standardise first</h3>
+    <p class="sub">Each candidate is scored 0 to 100: 40 points for impact on the three problems, 20 for how many teams it reaches, 40 for ease and low risk. The top two are small and fix cost ownership first. Heavy items such as a common Kubernetes platform wait until teams ask.</p>
+    <div class="scroll"><table><thead><tr><th>Candidate</th><th class="n" title="Impact on fragmentation, setup and triage, cost ownership">Impact 1·2·3</th><th class="n">Reach</th><th class="n">Ease</th><th>Score</th><th class="n"></th><th>Decision</th></tr></thead><tbody>${candRows}</tbody></table></div></div>
+
+  <div class="box" style="margin-bottom:16px"><h3>2. How to keep local flexibility</h3>
+    <p class="sub">The platform decides 6 of 23 choices. Teams keep the rest, or can depart from a default with a logged reason.</p>
+    <div class="tri">
+      <div class="f1"><h4>Fixed rules</h4><span class="big">6</span><span class="sub">No exceptions. Cheap to meet, costly to miss.</span><ul><li>Owner, application, cost-centre and environment tags</li><li>Workforce SSO with just-in-time production access</li><li>Secrets in the vault</li><li>Encryption at rest</li><li>Logs forwarded to the central store</li><li>Vulnerability scan on every build</li></ul></div>
+      <div class="f2"><h4>Defaults</h4><span class="big">8</span><span class="sub">Used unless the team records why not.</span><ul><li>Pipeline template and rollback pattern</li><li>Base images</li><li>OpenTelemetry agent</li><li>Standard alert pack</li><li>Region and network pattern</li><li>Backup schedule by tier</li><li>Autoscaling profile</li><li>Cost budget alert</li></ul></div>
+      <div class="f3"><h4>Team choice</h4><span class="big">9</span><span class="sub">The platform does not interfere.</span><ul><li>Language and framework</li><li>Runtime: Kubernetes, serverless, PaaS</li><li>Data store within the approved list</li><li>Test tooling</li><li>Branching model</li><li>Release cadence</li><li>Service design</li><li>Specialist ML or data tooling</li><li>Local developer tooling</li></ul></div>
+    </div>
+    <p class="sub">Departing from a default needs a 48-hour decision from a platform architect. Each departure is logged and expires after 6 months. Target exception rate: under 15% of services. The ${SPECIALIST.length} specialist teams (data, ML, risk, identity, security) are in their own review lane with a named platform contact.</p></div>
+
+  <div class="box" style="margin-bottom:16px"><h3>3. How to introduce cost accountability without overwhelming teams</h3>
+    <div class="grid2" style="margin-bottom:0">
+      <div><table><thead><tr><th>Phase</th><th>What teams see</th><th>Effort for a team</th></tr></thead><tbody>
+       <tr><td><b>Months 1–2</b><br>Visibility</td><td>Owner registry and inherited tags. No money moves.</td><td>Confirm owner once</td></tr>
+       <tr><td><b>Months 3–4</b><br>Showback</td><td>Monthly cost page per team, with budget alerts.</td><td>15 minutes a month</td></tr>
+       <tr><td><b>Months 5–6</b><br>Shared costs</td><td>Network, platform and shared services allocated by rule.</td><td>None, rules are published</td></tr>
+       <tr><td><b>Month 7 on</b><br>Chargeback</td><td>Non-production and Tier 3 first. Tier 1 stays showback until Gate 3.</td><td>Review budget quarterly</td></tr></tbody></table></div>
+      <div><h3 style="margin-top:0">Projected unallocated share, %</h3>${lineChart([27,20,17,14,11,9.7],{min:5,max:30,fmt:v=>Math.round(v)+'%',label:'Projected unallocated share',col:'var(--ok)',labels:['Now','M2','M3','M4','M5','M6']})}</div>
+    </div></div>
+
+  <div class="pb"><span class="no">C</span><h2>Concerns about the intent, each with a guard and a tripwire</h2></div>
+  <div class="box" style="margin-bottom:16px"><div class="cc"><h3 style="margin-bottom:2px">Concern 1</h3><h2>Rigid templates frustrate specialist teams</h2><p class="q">Central standards can reduce waste, but overly rigid templates can frustrate specialist teams.</p></div>
+    <div class="grid2" style="margin:12px 0 0"><div>
+      <h3>Guards</h3><ul style="padding-left:18px;margin:0;font-size:13px"><li>Fixed rules stay at 6. Everything else is a default with a 48-hour exception path.</li><li>Each template has 3 variants and accepts pull requests from any team.</li><li>Specialist teams get a named contact and a review lane.</li><li>Pilot teams include one specialist team (ML Engineering).</li></ul></div>
+      <div><h3>Signals, with an illustrative pilot reading at month 3</h3><table><thead><tr><th>Signal</th><th class="n">Target</th><th class="n">Tripwire</th><th class="n">Pilot</th></tr></thead><tbody>
+        <tr><td>Template opt-out rate</td><td class="n">&lt; 20%</td><td class="n">&gt; 30%</td><td class="n s-ok">18%</td></tr>
+        <tr><td>Team satisfaction, 1–5</td><td class="n">≥ 4.0</td><td class="n">&lt; 3.0</td><td class="n">3.8</td></tr>
+        <tr><td>Exception decision time</td><td class="n">48 h</td><td class="n">&gt; 5 d</td><td class="n s-ok">31 h</td></tr>
+        <tr><td>Changes to templates from outside the platform team</td><td class="n">≥ 25%</td><td class="n">&lt; 10%</td><td class="n s-bad">12%</td></tr></tbody></table>
+        <p class="sub" style="margin-top:8px">Tripwire action: if opt-out stays above 30% for two months, redesign that template with the opting-out teams before adding anything else.</p></div></div></div>
+
+  <div class="box" style="margin-bottom:16px"><div class="cc"><h3 style="margin-bottom:2px">Concern 2</h3><h2>Cost cuts must not weaken critical workloads</h2><p class="q">Cost reductions must not compromise security, performance or resilience for critical workloads.</p></div>
+    <div class="tri" style="margin-top:12px">
+      <div class="f1"><h4>Tier 1 is protected</h4><span class="big">${t1.n} apps · ${L1(t1.c)}</span><span class="sub">${(t1.c/TOTAL*100).toFixed(0)}% of total spend. Multi-AZ, warm standby and capacity headroom are not cost targets.</span></div>
+      <div class="f2"><h4>Tier 2</h4><span class="big">${t2.n} apps · ${L1(t2.c)}</span><span class="sub">Right-sizing only after a performance test.</span></div>
+      <div class="f3"><h4>Tier 3 and non-production</h4><span class="big">${t3.n} apps · ${L1(t3.c)}</span><span class="sub">Automatic savings allowed.</span></div>
+    </div>
+    <div class="scroll"><table><thead><tr><th>Savings lever</th><th>Tier 1</th><th>Tier 2</th><th>Tier 3</th><th>Non-prod</th><th class="n">Saving ₹ L/mo</th></tr></thead><tbody>${lvRows}<tr><td><b>Total</b></td><td></td><td></td><td></td><td></td><td class="n"><b>${totSave.toFixed(2)}</b></td></tr></tbody></table></div>
+    <p class="sub" style="margin-top:8px">Savings of ${L(totSave)} a month are ${(totSave/TOTAL*100).toFixed(1)}% of spend. Only ₹0.40 L of it comes from Tier 1 right-sizing, and that needs a load test and sign-off. Tripwire: any Tier 1 SLO breach linked to a cost action pauses all automated actions on that tier until reviewed.</p>
+    <p class="sub">Security defaults are never traded against cost: the six fixed rules have no savings lever attached.</p></div>
+
+  <div class="box"><div class="cc"><h3 style="margin-bottom:2px">Concern 3</h3><h2>A big build before feedback repeats the fragmentation</h2><p class="q">A large platform build before user feedback could repeat the fragmentation it aims to solve.</p></div>
+    <div class="grid2" style="margin:12px 0 0"><div><h3>Six months, three gates</h3>${gp}
+      <p class="sub" style="margin-top:6px">Phase 1: ${phases[0][3]}. Phase 2: ${phases[1][3]}. Phase 3: ${phases[2][3]}.</p>
+      <h3 style="margin-top:14px">Build rules</h3><ul style="padding-left:18px;margin:0;font-size:13px"><li>No capability is built until two teams ask and one pilot team co-owns it.</li><li>Platform team capped at 8 people: 50% roadmap, 30% pilot support, 20% reserved for feedback fixes.</li><li>Each new platform capability retires an old pipeline, dashboard or process.</li><li>Fortnightly demo to pilot teams, and a survey after each gate.</li></ul></div>
+      <div><h3>Adoption waves</h3>
+        <table><thead><tr><th>Wave</th><th class="n">Teams</th><th class="n">Apps</th><th class="n">Spend/mo</th></tr></thead><tbody>
+        ${ws.map((s,i)=>`<tr><td><span class="dot" style="background:var(--${['ok','az','mute'][i]})"></span>${WN[i+1]}</td><td class="n">${s.teams}</td><td class="n">${s.apps}</td><td class="n">${L1(s.cost)}</td></tr>`).join('')}</tbody></table>
+        <p class="sub" style="margin-top:8px">Pilot teams cover all three clouds: Digital Channels (AWS, GCP), Procurement (Azure), ML Engineering (GCP) and the Cloud Platform team itself.</p></div></div>
+    <div class="scroll" style="margin-top:12px"><table><thead><tr><th>Gate</th><th>When</th><th>Evidence needed</th><th>If missed</th></tr></thead><tbody>${gates.map(g=>`<tr><td><b>${g[0]}</b></td><td>${g[1]}</td><td>${g[2]}</td><td>${g[3]}</td></tr>`).join('')}</tbody></table></div>
+    <h3 style="margin-top:16px">Teams by adoption wave</h3><div class="chips">${teamChips}</div>
+    <div class="legend"><span><span class="dot" style="background:var(--ok)"></span>Pilot</span><span><span class="dot" style="background:var(--az)"></span>Second wave</span><span><span class="dot" style="background:var(--mute)"></span>Third wave</span></div></div>`;
+}
+
+/* ---------- decision brief ---------- */
+const PILOT=['T01','T10','T17'];
+const PILOT_UNALLOC=3.1; // ₹ L of the unallocated pool found in the pilot teams' accounts (synthetic)
+function renderBrief(){
+  const pa=APPS.filter(a=>PILOT.includes(a.team)),pCost=sum(pa,a=>a.cost);
+  const share=pa.length/APPS.length;
+  const pilotRows=PILOT.map(id=>{const t=T[id],as=pa.filter(a=>a.team===id),cl=[...new Set(as.map(a=>a.cloud))];
+    return `<tr><td><b>${t.name}</b><br><span class="tag">${id}</span></td><td>${as.map(a=>a.name).join(', ')}</td><td>${cl.map(cloudDot).join(' ')}</td><td class="n">${L(sum(as,a=>a.cost))}</td><td>${t.pipe}</td><td>${t.mon}</td><td>${t.acc}</td></tr>`}).join('');
+  const frict=[
+   ['New application takes 18 working days','13 days are waiting between teams: reviews, landing zone, access, pipeline build','Every new app',"Yes. Pilot aim: 8 days or fewer"],
+   ['27% of spend has no owner','₹19.98 L a month; 4,970 of 18,420 resources lack an owner tag',"FinOps, every team",`Partly. ₹${PILOT_UNALLOC.toFixed(1)} L sits in the pilot teams' accounts`],
+   ['Incidents cross 3.8 support groups','P1 mean time to resolve is 4.6 h; 56% of incidents touch 4+ groups','On-call engineers, customers','Partly. Pilot apps only'],
+   ['Access takes 6 to 52 hours','Procurement waits 52 h on email to an AD admin','New joiners, release managers','Yes. Pilot aim: under 1 hour'],
+   ['7 pipeline toolchains, 8 monitoring tools','Pilot teams use 3 different pipelines and 3 different monitoring tools','Everyone who moves teams','Yes for the 3 pilot teams']];
+  const SVCS=[
+   ['Start a service','Portal form creates the repository, environments, owner record and tags in one request. Replaces 7 hand-offs.','Application teams request. Platform team owns.','1'],
+   ['Golden deploy path','Two pipeline templates (container, PaaS or serverless) with tests, scanning and automatic rollback.','Application teams use. Platform team maintains. Any team can propose changes.','2'],
+   ['Visibility pack','OpenTelemetry setup, standard alert pack, and one health and incident page per app that names the owner.','Application teams own alerts for their app. SRE owns the pack.','3'],
+   ['Cost and ownership','Owner registry, inherited tags, monthly cost page per team, budget alerts at 80% and 100%.','Application teams own their budget. FinOps owns allocation rules.','4']];
+  const notNow=['Common Kubernetes platform','Managed database service','Chargeback (showback only for now)','Full service catalogue','Moving all 46 applications','Replacing cloud-native tools'];
+  const steps=[ // label, desc, before, after, control
+   ['1 Ask for a service','Fill one portal form: name, team, template, tier',M.stages[0][1],M.stages[0][2],'Owner and cost-centre captured'],
+   ['2 Pattern sign-off','Pre-approved patterns replace a review per app',M.stages[1][1],M.stages[1][2],'Security reviews the template once'],
+   ['3 Environment and access','Dev, test, prod and role groups created',M.stages[2][1]+M.stages[3][1],M.stages[2][2]+M.stages[3][2],'SSO groups and just-in-time prod access'],
+   ['4 Build and deploy','Repository comes with the golden pipeline',M.stages[4][1],M.stages[4][2],'Scan, secrets check, rollback'],
+   ['5 Monitor','Health page and alerts exist at creation',M.stages[5][1],M.stages[5][2],'Alerts routed to the owner'],
+   ['6 Go live','Readiness checked automatically',M.stages[6][1],M.stages[6][2],'Tier-based release gate']];
+  const stBefore=sum(steps,s=>s[2]),stAfter=sum(steps,s=>s[3]);
+  const stepsHtml=steps.map((s,i)=>`<div class="step" style="border-top-color:var(--${['az','az','az','gcp','gcp','aws'][i]})"><b>${s[0]}</b>${s[1]}<span class="d"><s>${s[2]} d</s> → <em>${s[3]} d</em></span><span class="sub" style="font-size:11px;display:block;margin-top:4px">Control: ${s[4]}</span></div>`).join('');
+  const ctl=[
+   ['Security','Owner tag and SSO groups. No shared accounts.','Dependency, image and secrets scan','Signed images, secrets from vault, just-in-time prod access','Encryption, network baseline, central logs','Quarterly access review'],
+   ['Reliability','Tier sets SLO, backup and DR','Tests; load test for Tier 1','Canary release with automatic rollback','Health checks, autoscaling, SLO burn alerts','Monthly SLO and incident review'],
+   ['Observability','Collector and health page created','Trace and log config checked','Deploy event on the health page','Standard alerts routed to owner','Alert noise report'],
+   ['Cost','Tags inherited, budget set','Cost estimate shown in pull request','Untagged deploys blocked','Budget alerts at 80% and 100%','Monthly cost page per team']];
+  const hist=[['Service desk'],['Cloud operations'],['Network team'],['App team'],['Database team'],['Security']];
+  const ex=byId[1],exBudget=Math.round(ex.cost*1.05*100)/100;
+  const pcRows=pa.map(a=>{const b=Math.round(a.cost*1.05*100)/100;return `<tr><td>${a.name}</td><td>${T[a.team].name}</td><td>${cloudDot(a.cloud)}</td><td>${a.tier}</td><td class="n">${a.cost.toFixed(2)}</td><td class="n">${b.toFixed(2)}</td><td class="n">${(a.cost/b*100).toFixed(0)}%</td></tr>`}).join('');
+  const afterUn=(UN-PILOT_UNALLOC)/TOTAL*100;
+  const raci=[
+   ['Platform services and roadmap','Platform team','Head of Technology','Pilot teams (monthly demo)'],
+   ['Security policy rules in templates','Security Operations','Head of Security','Platform team'],
+   ['Alert pack and incident view','Observability and SRE','Platform team','Application teams'],
+   ['Cost allocation rules and showback','FinOps (Cloud Platform)','Head of Technology','Finance, application teams'],
+   ['Service level and budget of an app','Application team','Team lead','Platform team'],
+   ['Template changes','Anyone via pull request','Platform team','Pilot teams']];
+  $('v-brief').innerHTML=`
+  <div class="note good" style="margin-top:0">Decision brief on synthetic data. Scope is deliberately small: three application teams, four shared services and 12 weeks. It is not a redesign of the enterprise platform.</div>
+
+  <div class="pb"><span class="no">A</span><h2>Recommendation</h2></div>
+  <div class="grid2">
+    <div class="box"><h3>Approve a 12-week pilot</h3>
+      <p>Build four shared services and offer them to three application teams. Judge the result on onboarding time, incident handling and cost ownership before extending to anyone else.</p>
+      <ul style="padding-left:18px;margin:0 0 8px"><li><b>Services:</b> start a service, golden deploy path, visibility pack, cost and ownership.</li><li><b>Teams:</b> Digital Channels, Procurement, ML Engineering, which together cover all three clouds.</li><li><b>Controls:</b> security and reliability defaults are built into every service. They are not a separate offering.</li><li><b>Not included:</b> ${notNow.join(', ').toLowerCase()}.</li></ul></div>
+    <div class="box"><h3>Pilot scope</h3>
+      <div class="kpi" style="margin:0 0 10px"><div class="stat"><b>3</b><span>application teams</span></div><div class="stat"><b>${pa.length}</b><span>of 46 applications</span></div><div class="stat"><b>${L1(pCost)}</b><span>monthly spend, ${(pCost/TOTAL*100).toFixed(0)}% of total</span></div><div class="stat"><b>12 wk</b><span>to the first decision</span></div></div>
+      <p class="sub">Excluded from the pilot: Tier 1 payment, ledger and payroll systems. The pilot includes ${pa.filter(a=>a.tier===1).length} Tier 1 apps, each with a load test and a manual production approval.</p></div>
+  </div>
+  <div class="box" style="margin-bottom:16px"><h3>Pilot teams today</h3><div class="scroll"><table><thead><tr><th>Team</th><th>Applications</th><th>Clouds</th><th class="n">Spend/mo</th><th>Pipeline</th><th>Monitoring</th><th>Access</th></tr></thead><tbody>${pilotRows}</tbody></table></div></div>
+
+  <div class="pb"><span class="no">B</span><h2>Biggest friction and cost problems</h2></div>
+  <div class="box" style="margin-bottom:16px"><div class="scroll"><table><thead><tr><th>Problem</th><th>Evidence</th><th>Who feels it</th><th>Pilot can fix it?</th></tr></thead><tbody>${frict.map(f=>`<tr><td><b>${f[0]}</b></td><td>${f[1]}</td><td>${f[2]}</td><td>${f[3]}</td></tr>`).join('')}</tbody></table></div></div>
+
+  <div class="pb"><span class="no">C</span><h2>Minimum useful platform services and shared-service view</h2></div>
+  <div class="grid2">
+    <div class="box"><h3>Shared-service view</h3>
+      <div class="stack">
+        <div><b>Application teams</b> · Digital Channels, Procurement, ML Engineering<br><span class="sub">Use the portal form, the golden pipeline, the health page and the cost page</span></div>
+        <div><b>Four shared services</b>
+          <div class="caps5">${SVCS.map(s=>`<span>${s[0]}</span>`).join('')}</div></div>
+        <div><b>Built-in controls</b> · security: SSO, just-in-time access, vault, scans · reliability: tier-based SLO, rollback, backup, DR</div>
+        <div class="base"><b>Existing foundations</b> · AWS, Azure and GCP landing zones, unchanged</div>
+      </div></div>
+    <div class="box"><h3>Who uses what, and who owns it</h3><div class="scroll"><table><thead><tr><th>Service</th><th>What a team gets</th><th>Ownership</th></tr></thead><tbody>${SVCS.map(s=>`<tr><td><b>${s[0]}</b></td><td>${s[1]}</td><td>${s[2]}</td></tr>`).join('')}</tbody></table></div></div>
+  </div>
+  <div class="box" style="margin-bottom:16px"><h3>Where security and reliability controls apply</h3><div class="scroll"><table><thead><tr><th>Control area</th><th>Create</th><th>Build</th><th>Deploy</th><th>Run</th><th>Review</th></tr></thead><tbody>${ctl.map(r=>`<tr><td><b>${r[0]}</b></td>${r.slice(1).map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table></div></div>
+
+  <div class="pb"><span class="no">D</span><h2>Journey 1: developer journey and platform use</h2></div>
+  <div class="box" style="margin-bottom:16px"><h3>From request to production, working days</h3><div class="flow">${stepsHtml}</div>
+    <p class="sub">Today ${stBefore} days. Target at scale ${stAfter} days. The pilot commitment is 8 days or fewer at week 12, because the first templates are not yet tuned.</p></div>
+  <div class="grid2">
+    <div class="mock"><div class="top">portal.northwind.example / new service (mock)</div><div class="bd">
+      <div class="fr"><div><label for="mTeam">Team</label><select id="mTeam">${PILOT.map(id=>`<option value="${id}">${T[id].name}</option>`).join('')}</select></div>
+      <div><label for="mTpl">Template</label><select id="mTpl"><option value="c">Container service</option><option value="p">PaaS or serverless</option><option value="d">Data job</option></select></div>
+      <div><label for="mCloud">Cloud</label><select id="mCloud"><option value="aws">AWS</option><option value="az">Azure</option><option value="gcp">GCP</option></select></div>
+      <div><label for="mTier">Tier</label><select id="mTier"><option value="1">Tier 1</option><option value="2" selected>Tier 2</option><option value="3">Tier 3</option></select></div></div>
+      <div class="out" id="mOut"></div></div></div>
+    <div class="box"><h3>Developer journey in the pilot, week by week</h3><table><thead><tr><th>Weeks</th><th>What the pilot teams do</th><th>Effort</th></tr></thead><tbody>
+      <tr><td>1–2</td><td>Agree owners, tiers and tags for ${pa.length} apps</td><td>0.5 day per team</td></tr>
+      <tr><td>3–6</td><td>Create one new service per team from the portal form</td><td>1 day per service</td></tr>
+      <tr><td>5–10</td><td>Move one existing app per team onto the golden pipeline</td><td>4 days per app</td></tr>
+      <tr><td>9–12</td><td>Use the health page for on-call and the cost page for review</td><td>15 minutes a month</td></tr></tbody></table>
+      <p class="sub" style="margin-top:8px">Pipelines for pilot teams go from 3 toolchains (Jenkins, Azure DevOps, GitHub Actions) to 1 template. Access waits fall from 6 to 52 hours to under 1 hour.</p></div>
+  </div>
+
+  <div class="pb"><span class="no">E</span><h2>Journey 2: reliability and observability</h2></div>
+  <div class="grid2">
+    <div class="box"><h3>An incident today and in the pilot</h3>
+      <p class="sub" style="margin-bottom:4px">Today: 6 hand-offs, 3.8 groups on average</p><div class="hops">${hist.map((h,i)=>`<span>${h[0]}</span>${i<hist.length-1?'<i>→</i>':''}`).join('')}</div>
+      <p class="sub" style="margin-bottom:4px">Pilot: alert goes to the named owner</p><div class="hops"><span class="ok">Alert names owner and tier</span><i>→</i><span class="ok">App team on call</span><i>→</i><span class="ok">Platform SRE only if infrastructure</span></div>
+      <h3>Health page for one app (mock)</h3>
+      <p style="margin:0 0 6px"><b>${ex.name}</b> · ${T[ex.team].name} · Tier ${ex.tier} · on ${CL[ex.cloud].n}</p>
+      <div class="hc"><div><b>99.97%</b><span>availability, target 99.95%</span></div><div><b>340 ms</b><span>p95 latency</span></div><div><b>0.21%</b><span>error rate</span></div><div><b>2 h ago</b><span>last deploy, template v1.3</span></div><div><b>0</b><span>open incidents</span></div><div><b>${L(ex.cost)}</b><span>cost this month, budget ${exBudget.toFixed(2)}</span></div></div></div>
+    <div class="box"><h3>Support groups per incident, pilot apps</h3>${lineChart([3.8,3.6,3.1,2.7,2.3,2.0],{min:1,max:4,fmt:v=>v.toFixed(1),label:'Support groups per incident in the pilot',col:'var(--ok)',labels:['W0','W2','W4','W6','W8','W12']})}
+      <table style="margin-top:8px"><thead><tr><th>Measure, pilot apps</th><th class="n">Today</th><th class="n">Week 12</th></tr></thead><tbody>
+      <tr><td>Support groups per incident</td><td class="n">3.8</td><td class="n">2.0</td></tr>
+      <tr><td>P1 mean time to resolve</td><td class="n">4.6 h</td><td class="n">3.0 h</td></tr>
+      <tr><td>Time to find the owner</td><td class="n">45 min</td><td class="n">Under 5 min</td></tr>
+      <tr><td>Monitoring tools in use</td><td class="n">3</td><td class="n">1 health page</td></tr>
+      <tr><td>Incidents a month (about ${Math.round(share*412)})</td><td class="n">${Math.round(share*412)}</td><td class="n">Track only</td></tr></tbody></table></div>
+  </div>
+  <div class="box" style="margin-bottom:16px"><h3>Reliability targets by tier, built into the templates</h3><div class="scroll"><table><thead><tr><th>Tier</th><th>Availability</th><th>Recovery</th><th>Alert response</th><th>Release rule</th></tr></thead><tbody>
+    <tr><td>Tier 1</td><td>99.95%</td><td>Warm standby in DR region</td><td>Page 24×7</td><td>Load test and manual prod approval</td></tr>
+    <tr><td>Tier 2</td><td>99.9%</td><td>Restore from backup in 4 h</td><td>Page in business hours</td><td>Automated tests, canary release</td></tr>
+    <tr><td>Tier 3</td><td>99.5%</td><td>Restore from backup in 24 h</td><td>Ticket</td><td>Automated tests</td></tr></tbody></table></div></div>
+
+  <div class="pb"><span class="no">F</span><h2>Journey 3: cloud expenditure and ownership</h2></div>
+  <div class="grid2">
+    <div class="box"><h3>Cost page for the pilot teams, November</h3><div class="scroll"><table><thead><tr><th>Application</th><th>Team</th><th>Cloud</th><th>Tier</th><th class="n">Cost ₹ L</th><th class="n">Budget ₹ L</th><th class="n">Used</th></tr></thead><tbody>${pcRows}</tbody></table></div>
+      <p class="sub" style="margin-top:8px">Budgets are set at 105% of last month. Alerts fire at 80% and 100%. No money moves in the pilot.</p></div>
+    <div class="box"><h3>Ownership ladder</h3><table><thead><tr><th>Step</th><th>When</th><th>Effect</th></tr></thead><tbody>
+      <tr><td>Owner and tags on every resource</td><td>Weeks 1–4</td><td>₹${PILOT_UNALLOC.toFixed(1)} L moves from unallocated to named apps</td></tr>
+      <tr><td>Cost page per team</td><td>Weeks 5–8</td><td>Teams see their own spend</td></tr>
+      <tr><td>Budget alerts</td><td>Weeks 9–12</td><td>Overspend flagged within a day</td></tr>
+      <tr><td>Chargeback</td><td>After the pilot</td><td>Non-prod and Tier 3 first</td></tr></tbody></table>
+      <div class="note good" style="margin-bottom:0">Company unallocated share moves from ${Math.round(UN/TOTAL*100)}% to ${afterUn.toFixed(1)}% from the pilot alone. No savings action touches a Tier 1 app.</div></div>
+  </div>
+
+  <div class="pb"><span class="no">G</span><h2>Adoption and ownership</h2></div>
+  <div class="grid2">
+    <div class="box"><h3>Who decides and who does</h3><div class="scroll"><table><thead><tr><th>Area</th><th>Owns</th><th>Accountable</th><th>Consulted</th></tr></thead><tbody>${raci.map(r=>`<tr><td>${r.join('</td><td>')}</td></tr>`).join('')}</tbody></table></div></div>
+    <div class="box"><h3>Adoption path</h3><table><thead><tr><th>Stage</th><th>Who</th><th>Rule</th></tr></thead><tbody>
+      <tr><td>Weeks 1–12</td><td>3 pilot teams</td><td>Opt in. Platform team sits with them weekly.</td></tr>
+      <tr><td>After gate</td><td>New applications</td><td>Template is the default. Exceptions in 48 hours.</td></tr>
+      <tr><td>Months 4–9</td><td>Existing apps, by team</td><td>Teams with the most waiting time go first.</td></tr>
+      <tr><td>Ongoing</td><td>All 22 teams</td><td>Retire an old pipeline or dashboard for each team moved.</td></tr></tbody></table>
+      <p class="sub" style="margin-top:8px">Success is measured by use, not by delivery: a service counts as adopted when a pilot team uses it without help twice in a row.</p></div>
+  </div>
+
+  <div class="pb"><span class="no">H</span><h2>Effort assumptions</h2></div>
+  <div class="grid2">
+    <div class="box calc"><h3>Adjust the assumptions</h3>
+      <div class="fr" style="display:grid;gap:10px">
+        <div><label for="cSize">Platform team size: <b id="cSizeV"></b> people</label><input type="range" id="cSize" min="3" max="8" step="1" value="5"></div>
+        <div><label for="cWeeks">Pilot length: <b id="cWeeksV"></b> weeks</label><input type="range" id="cWeeks" min="8" max="16" step="1" value="12"></div>
+        <div><label for="cCost">Loaded cost per person-month: ₹<b id="cCostV"></b> L</label><input type="range" id="cCost" min="1.2" max="2.6" step="0.1" value="1.8"></div>
+        <div><label for="cApps">New applications per year: <b id="cAppsV"></b></label><input type="range" id="cApps" min="10" max="60" step="5" value="30"></div>
+      </div>
+      <p class="sub" style="margin-top:10px">Fixed assumptions: pilot teams spend 4 days per migrated app and 2 days each on workshops. A steady-state team of 3 runs the platform. Onboarding effort falls from 22 to 6 person-days per app. Safe savings at full rollout are ₹6.5 L a month.</p></div>
+    <div class="box"><h3>Result</h3><div id="cOut"></div></div>
+  </div>
+  <div class="box"><h3>Gates and decision</h3><div class="scroll"><table><thead><tr><th>Gate</th><th>Evidence</th><th>Decision</th></tr></thead><tbody>
+    <tr><td>Week 4</td><td>3 teams onboarded · tags on all ${pa.length} pilot apps · first new service created in under 2 days of work</td><td>Continue or fix the template</td></tr>
+    <tr><td>Week 8</td><td>Incident groups ≤ 3.0 · satisfaction ≥ 3.5 of 5 · template opt-out ≤ 30%</td><td>Add security and reliability extras only if asked</td></tr>
+    <tr><td>Week 12</td><td>Setup ≤ 8 days · incident groups ≤ 2.0 · pilot cost 100% attributed · no Tier 1 SLO breach</td><td>Extend to new applications or stop</td></tr></tbody></table></div></div>`;
+  // mock portal
+  const RES={c:{aws:'EKS namespace, load balancer, container registry',az:'AKS namespace (planned), App Gateway, container registry',gcp:'GKE namespace, gateway, Artifact Registry'},
+            p:{aws:'ECS Fargate service, load balancer, container registry',az:'App Service, Front Door, container registry',gcp:'Cloud Run service, load balancer, Artifact Registry'},
+            d:{aws:'Glue job, S3 bucket, EventBridge schedule',az:'Data Factory pipeline, storage account',gcp:'Cloud Run job, BigQuery dataset, scheduler'}};
+  const BASE={c:0.45,p:0.28,d:0.35},TM={1:2.2,2:1.3,3:0.7},CF={aws:1,az:1.05,gcp:0.95};
+  const TC={1:'Multi-AZ · warm standby in DR region · 99.95% SLO · 24×7 page · load test before release',2:'Multi-AZ · restore from backup in 4 h · 99.9% SLO · page in business hours',3:'Single zone allowed · restore in 24 h · 99.5% SLO · ticket on alert · non-prod shuts down out of hours'};
+  const mockUpdate=()=>{const tm=$('mTeam').value,tp=$('mTpl').value,cl=$('mCloud').value,tr=$('mTier').value,
+    est=BASE[tp]*TM[tr]*CF[cl],mins=tr==='1'?55:tr==='2'?45:35;
+    $('mOut').innerHTML=`<b>Request: ${T[tm].name}, Tier ${tr}, ${CL[cl].n}</b><ul>
+      <li><b>Created in about ${mins} minutes:</b> dev, test and prod environments · ${RES[tp][cl]} · repository with golden pipeline · vault path · health page and alert pack · owner record</li>
+      <li><b>Security applied:</b> SSO group ${tm}-${['dev','test','prod'][0]}, just-in-time prod access, image and secrets scans, encryption, central logs</li>
+      <li><b>Reliability applied:</b> ${TC[tr]}</li>
+      <li><b>Cost:</b> tags owner=${tm}, tier=${tr}, env · baseline estimate ₹${est.toFixed(2)} L a month · budget alert at 80% and 100%</li></ul>`};
+  ['mTeam','mTpl','mCloud','mTier'].forEach(i=>$(i).onchange=mockUpdate);mockUpdate();
+  // calculator
+  const calc=()=>{const sz=+$('cSize').value,wk=+$('cWeeks').value,cp=+$('cCost').value,na=+$('cApps').value;
+    $('cSizeV').textContent=sz;$('cWeeksV').textContent=wk;$('cCostV').textContent=cp.toFixed(1);$('cAppsV').textContent=na;
+    const build=sz*wk/4.33*cp,pilotPD=pa.length*4+3*2,pilot=pilotPD/21*cp,run=3*12*cp,save=6.5*12,onb=na*(22-6)/21*cp,net=save+onb-run,pay=net>0?(build+pilot)/(net/12):null;
+    $('cOut').innerHTML=`<table><tbody>
+     <tr><td>Platform team build, ${sz} people for ${wk} weeks</td><td class="n">${L(build)}</td></tr>
+     <tr><td>Pilot team effort, ${pilotPD} person-days</td><td class="n">${L(pilot)}</td></tr>
+     <tr><td><b>One-time investment</b></td><td class="n"><b>${L(build+pilot)}</b></td></tr>
+     <tr><td>Platform run cost after the pilot, 3 people, per year</td><td class="n">${L(run)}</td></tr>
+     <tr><td>Safe cloud savings at full rollout, per year</td><td class="n">${L(save)}</td></tr>
+     <tr><td>Onboarding effort saved, ${na} apps per year</td><td class="n">${L(onb)}</td></tr>
+     <tr><td><b>Net benefit per year at full rollout</b></td><td class="n ${net>0?'s-ok':'s-bad'}"><b>${L(net)}</b></td></tr>
+     <tr><td><b>Payback after full rollout</b></td><td class="n"><b>${pay?pay.toFixed(1)+' months':'Not within 3 years'}</b></td></tr></tbody></table>
+     <p class="sub" style="margin-top:8px">The pilot alone does not pay back. It buys evidence for the decision to extend. Benefits depend on all 22 teams adopting, which is why the gates come before more investment.</p>`};
+  ['cSize','cWeeks','cCost','cApps'].forEach(i=>$(i).oninput=calc);calc();
+}
+
+/* ---------- 90-day plan ---------- */
+const IND=[
+ {k:'env',name:'Environment lead time',unit:'working days',def:'Request to usable dev, test and prod environments with access, median',base:5.0,tgt:[3.0,1.5,0.5],trip:[4.0,2.5,1.5],low:true,f:v=>v.toFixed(1),min:0,max:6},
+ {k:'adopt',name:'Adoption',unit:'apps on the golden path',def:'Apps deployed through the golden pipeline without platform help, out of 46',base:0,tgt:[3,8,12],trip:[1,5,8],low:false,f:v=>Math.round(v)+'',min:0,max:14},
+ {k:'vis',name:'Service visibility',unit:'% of in-scope apps',def:'Apps with a named owner, a health page and alerts routed to the owner',base:12,tgt:[50,88,100],trip:[30,70,85],low:false,f:v=>Math.round(v)+'%',min:0,max:100},
+ {k:'spend',name:'Attributed cloud spend',unit:'% of monthly spend',def:'Share of the ₹74 L bill traced to a named application owner',base:73.0,tgt:[74.5,76.0,77.2],trip:[73.5,75.0,76.0],low:false,f:v=>v.toFixed(1)+'%',min:72,max:78}];
+const CPS=[
+ {d:'Day 0',date:'9 Nov 2026',title:'Start',who:'',opts:[],crit:[],non:[]},
+ {d:'Day 30',date:'9 Dec 2026',title:'Is the thin slice worth continuing?',who:'Head of Technology with the platform product owner',
+  non:['Owner and tags agreed for all 8 pilot apps','Support channel live and first response within 1 hour','Adopter satisfaction at least 3.5 of 5','No Tier 1 SLO breach caused by a platform change'],
+  opts:['Continue with 3 teams','Fix the thin slice and repeat the checkpoint in 2 weeks','Stop']},
+ {d:'Day 60',date:'8 Jan 2027',title:'Add more teams or hold?',who:'Head of Technology, Security lead, platform product owner',
+  non:['Template opt-out at most 30%','Change failure rate of platform releases at most 10%','Adopter satisfaction at least 3.8 of 5','Security sign-off on both templates'],
+  opts:['Add up to 2 teams (Order Management, Data Platform)','Hold at 3 teams and fix gaps','Stop']},
+ {d:'Day 90',date:'7 Feb 2027',title:'Extend, continue or stop?',who:'Technology leadership forum',
+  non:['All adopter teams reviewed their cost page in the monthly review','Support load at most 12 tickets a week','Run plan for a 3-person steady state agreed','Approach to chargeback for non-production agreed'],
+  opts:['Make the platform the default for new apps','Continue as a pilot for one more quarter','Stop and keep the useful parts']}];
+let planCp=1;
+function indAt(i,cp){return cp===0?i.base:i.tgt[cp-1]}
+function indSeries(i){const kf=[[0,i.base],[30,i.tgt[0]],[60,i.tgt[1]],[90,i.tgt[2]]];
+  return Array.from({length:13},(_,w)=>{const d=w*7.5;for(let j=1;j<4;j++){if(d<=kf[j][0]){const a=kf[j-1],b=kf[j];return a[1]+(b[1]-a[1])*(d-a[0])/(b[0]-a[0])}}return kf[3][1]})}
+function renderPlan(){
+  const wkLab=Array.from({length:13},(_,w)=>w%2===0?`D${Math.round(w*7.5)}`:'');
+  const pct=d=>d/91*100;
+  const rows=[
+   ['Environment vending',[[1,4,'p1','Build v0'],[5,9,'p2','Pilot use'],[10,13,'p3','Extend']]],
+   ['Golden deploy path',[[1,5,'p1','Two templates'],[6,10,'p2','Move 8 apps'],[11,13,'p3','Add 4 apps']]],
+   ['Visibility pack',[[2,5,'p1','Collector, health page'],[6,9,'p2','Alert routing'],[10,13,'p3','Tune alerts']]],
+   ['Cost and ownership',[[1,4,'p1','Tags, registry'],[5,9,'p2','Cost page, budgets'],[10,13,'p3','Allocation rules']]],
+   ['Support and adoption',[[1,5,'p1','Hypercare, 3 teams'],[6,9,'p2','Office hours'],[10,13,'p3','Onboard 2 teams']]]];
+  const over=`<div class="frz" style="left:${pct(45)}%;width:${pct(9)}%"></div>${[30,60,90].map(d=>`<div class="cpl" style="left:calc(${pct(d)}% - 1px)"></div>`).join('')}`;
+  const gantt=`<div class="gx"><div class="hdr"><div></div><div class="wk">${Array.from({length:13},(_,w)=>`<span>W${w+1}</span>`).join('')}</div></div>
+   ${rows.map(r=>`<div class="rw"><div>${r[0]}</div><div class="trk">${r[1].map(b=>`<div class="b3 ${b[2]}" style="left:${(b[0]-1)/13*100}%;width:calc(${(b[1]-b[0]+1)/13*100}% - 2px)" title="${b[3]}">${b[3]}</div>`).join('')}${over}</div></div>`).join('')}
+   <div class="rw"><div>Checkpoints</div><div class="trk">${[[30,'Day 30'],[60,'Day 60'],[90,'Day 90']].map(c=>`<div class="b3" style="left:calc(${pct(c[0])}% - 52px);width:52px;background:var(--fg);color:var(--bg);text-align:center;padding:3px 0">${c[1]}</div>`).join('')}${over}</div></div></div>`;
+  const phases=[
+   ['Days 1–30','Prove the thin slice','3 teams: Digital Channels, Procurement, ML Engineering','Owner and tag schema, registry, environment vending v0, container template, health page. One new service per team. Hypercare with an embedded engineer.','8 apps have owners and tags; first new service created; support live'],
+   ['Days 31–60','Widen and harden','Same 3 teams, 8 apps moved to the golden path','Second template (PaaS or serverless), alert routing, cost page, budget alerts. Security sign-off. Holiday change freeze 24 Dec to 2 Jan.','8 apps on the golden path; cost page used; rollback tested'],
+   ['Days 61–90','Stabilise and decide','Up to 2 more teams if Day 60 allows (Order Management, Data Platform)','Tune alerts, publish allocation rules, plan the 3-person run model, agree non-production chargeback approach.','12 apps on the path; run plan and chargeback approach agreed']];
+  const owners=[
+   ['Executive sponsor','Head of Technology','Chairs the checkpoints, clears blockers','2 hours a fortnight'],
+   ['Platform product owner','Platform team','Backlog, priorities, adopter feedback','Full time'],
+   ['Platform tech lead','Platform team','Design, template standards, change approval','Full time'],
+   ['Platform engineers (3)','Platform team','Build, support rota, hypercare','Full time'],
+   ['SRE lead','Observability and SRE','Alert pack, incident view, platform service levels','30%'],
+   ['Security architect','Security Operations','Security rules in templates, exceptions','20%'],
+   ['FinOps lead','Cloud Platform','Tags, registry, cost page, allocation rules','30%'],
+   ['Adopter champions (3)','One per pilot team','Backlog input, migration, feedback','20% for 6 weeks, then 10%']];
+  const sup=[
+   ['Docs and templates','24×7','Self-service','How-to guides, FAQs, template README'],
+   ['Platform chat channel (L1)','9:00–18:00 IST','1 hour','Questions, access, stuck pipeline'],
+   ['Platform engineer on rota (L2)','9:00–18:00 IST','4 hours; 30 minutes if a Tier 1 release is blocked','Template defects, environment faults'],
+   ['Weekly office hours','Thursday 15:00','Scheduled','Design questions, migration planning'],
+   ['Embedded engineer','2 days a week per team, first 4 weeks','Scheduled','Hands-on migration'],
+   ['Escalation (L3)','Per contract','Per contract','Cloud provider support, security incident team']];
+  const std=[
+   ['Fixed rules (6)','Owner, application, cost-centre and environment tags · workforce SSO with just-in-time prod access · secrets in the vault · encryption at rest · central log forwarding · vulnerability scan on every build'],
+   ['Template standard','Semantic versions, a README per template, a test suite for every release, adopters may pin one version back for 60 days'],
+   ['Naming and tagging','Service names follow team-app-env. Tags: owner, app, cost-centre, env. Untagged deploys are blocked.'],
+   ['Done means adopted','Owner recorded · health page live · alerts routed to the owner · deployed through the golden pipeline twice without help · cost page reviewed in a monthly meeting'],
+   ['Exceptions','Raised in the portal, decided in 48 hours, logged, expire after 6 months']];
+  const chg=[
+   ['Patch','Bug fix, no behaviour change','Platform tech lead','Automatic to all, announced in the channel','Same day'],
+   ['Minor','New option or capability','Tech lead and one adopter champion','Canary on one adopter for 3 days, then all','3 days'],
+   ['Major','Breaking change','Change group: tech lead, security architect, SRE lead, one champion','RFC, 2 weeks notice, adopters migrate on their schedule','2 weeks'],
+   ['Emergency','Security or outage fix','Tech lead, informed after the fact','Immediate, review within 2 working days','Immediate']];
+  const risks=[
+   ['Adopter teams have no capacity in December','Plan work around the 24 Dec to 2 Jan freeze. Embedded engineer carries the migration.'],
+   ['Templates are too rigid for ML Engineering','ML Engineering is a pilot team. Exceptions in 48 hours. Variants reviewed at Day 60.'],
+   ['A platform change breaks a Tier 1 release','Canary on one adopter, rollback in 15 minutes, no changes during Tier 1 release windows. Tier 1 apps need manual production approval.'],
+   ['Platform team is pulled into support','Capacity split: 50% roadmap, 30% adopter support, 20% fixes. Review at each checkpoint.']];
+  const charts=IND.map(i=>`<div class="box"><h3>${i.name}, ${i.unit}</h3>${lineChart(indSeries(i),{min:i.min,max:i.max,fmt:i.f,label:i.name+' planned trajectory',col:'var(--az)',labels:wkLab})}</div>`).join('');
+  $('v-plan').innerHTML=`
+  <div class="note good" style="margin-top:0">Plan on synthetic data. Day 0 is Monday 9 November 2026. Targets are plan values, not measured results.</div>
+
+  <div class="pb"><span class="no">A</span><h2>Plan on a page</h2></div>
+  <div class="box" style="margin-bottom:16px"><h3>Thirteen weeks, three phases, three checkpoints</h3><div class="scroll">${gantt}</div>
+    <div class="legend"><span><span class="dot" style="background:var(--az)"></span>Phase 1: prove</span><span><span class="dot" style="background:var(--gcp)"></span>Phase 2: harden</span><span><span class="dot" style="background:var(--aws)"></span>Phase 3: stabilise</span><span><span class="dot un"></span>Change freeze 24 Dec to 2 Jan</span><span>Black lines: checkpoints</span></div></div>
+  <div class="box" style="margin-bottom:16px"><div class="scroll"><table><thead><tr><th>Phase</th><th>Theme</th><th>Early adopters</th><th>Work</th><th>Exit state</th></tr></thead><tbody>${phases.map(p=>`<tr><td><b>${p[0]}</b></td><td>${p[1]}</td><td>${p[2]}</td><td>${p[3]}</td><td>${p[4]}</td></tr>`).join('')}</tbody></table></div></div>
+
+  <div class="pb"><span class="no">B</span><h2>Four indicators and checkpoint dashboard</h2></div>
+  <div class="box" style="margin-bottom:16px"><h3>Select a checkpoint</h3>
+    <div class="cpb" id="cpb">${CPS.map((c,i)=>`<button class="f" data-cp="${i}" aria-pressed="${i===planCp}">${c.d}${i?' · '+c.date:''}</button>`).join('')}</div>
+    <div id="dash"></div></div>
+  <div class="grid2">${charts}</div>
+  <div class="box" style="margin-bottom:16px"><h3>Definitions</h3><table><tbody>${IND.map(i=>`<tr><td><b>${i.name}</b></td><td>${i.def}</td><td class="n">Today ${i.f(i.base)}</td><td class="n">Day 90: ${i.f(i.tgt[2])}</td></tr>`).join('')}</tbody></table>
+    <p class="sub" style="margin-top:8px">Reliability guardrails, tracked next to the indicators and not traded against them: no Tier 1 SLO breach caused by a platform change, platform release change failure rate at most 10%, rollback within 15 minutes, portal and pipelines available 99.5% in business hours.</p></div>
+
+  <div class="pb"><span class="no">C</span><h2>Owners and support model</h2></div>
+  <div class="grid2">
+    <div class="box"><h3>Owners</h3><div class="scroll"><table><thead><tr><th>Role</th><th>From</th><th>Accountable for</th><th>Time</th></tr></thead><tbody>${owners.map(o=>`<tr><td><b>${o[0]}</b></td><td>${o[1]}</td><td>${o[2]}</td><td>${o[3]}</td></tr>`).join('')}</tbody></table></div></div>
+    <div class="box"><h3>Support model</h3><div class="scroll"><table><thead><tr><th>Channel</th><th>When</th><th>Response</th><th>Used for</th></tr></thead><tbody>${sup.map(o=>`<tr><td><b>${o[0]}</b></td><td>${o[1]}</td><td>${o[2]}</td><td>${o[3]}</td></tr>`).join('')}</tbody></table></div></div>
+  </div>
+
+  <div class="pb"><span class="no">D</span><h2>Standards and change controls</h2></div>
+  <div class="grid2">
+    <div class="box"><h3>Standards</h3><table><tbody>${std.map(s=>`<tr><td><b>${s[0]}</b></td><td>${s[1]}</td></tr>`).join('')}</tbody></table></div>
+    <div class="box"><h3>Change controls for platform releases</h3><div class="scroll"><table><thead><tr><th>Class</th><th>Example</th><th>Approver</th><th>Rollout</th><th>Lead time</th></tr></thead><tbody>${chg.map(c=>`<tr><td><b>${c[0]}</b></td><td>${c[1]}</td><td>${c[2]}</td><td>${c[3]}</td><td>${c[4]}</td></tr>`).join('')}</tbody></table></div>
+      <p class="sub" style="margin-top:8px">No platform changes during an adopter's Tier 1 release window. Freeze from 24 December to 2 January, except emergency fixes.</p></div>
+  </div>
+
+  <div class="pb"><span class="no">E</span><h2>Risks</h2></div>
+  <div class="box"><table><thead><tr><th>Risk</th><th>Response</th></tr></thead><tbody>${risks.map(r=>`<tr><td><b>${r[0]}</b></td><td>${r[1]}</td></tr>`).join('')}</tbody></table></div>`;
+  const dash=()=>{
+    const c=CPS[planCp],cp=planCp;
+    const tiles=IND.map(i=>{const v=indAt(i,cp),t=i.tgt[2],prog=i.low?(i.base-v)/(i.base-t):(v-i.base)/(t-i.base);
+      return `<div><div class="nm">${i.name}</div><b class="v">${i.f(v)}</b><small>${i.unit}</small><div class="pg"><i style="width:${Math.max(0,Math.min(1,prog))*100}%"></i></div><small>Today ${i.f(i.base)} · Day 90 target ${i.f(t)}</small>${cp?`<small>Adjust the plan if ${i.low?'above':'below'} ${i.f(i.trip[cp-1])}</small>`:''}</div>`}).join('');
+    const body=cp?`<div class="grid2" style="margin:0"><div><h3>${c.title}</h3><p class="sub"><b>Decides:</b> ${c.who}<br><b>Date:</b> ${c.date}</p>
+      <h3>Evidence pack</h3><ul class="crit" style="padding-left:18px;margin:0 0 8px">${IND.map(i=>`<li>${i.name} ${i.low?'at most':'at least'} <b>${i.f(i.tgt[cp-1])}</b></li>`).join('')}${c.non.map(n=>`<li>${n}</li>`).join('')}</ul></div>
+      <div><h3>Options on the day</h3><ol style="padding-left:18px;margin:0 0 8px">${c.opts.map(o=>`<li>${o}</li>`).join('')}</ol>
+      <p class="sub">If two or more indicators are past their adjust line, the default option is to hold scope and fix before adding teams.</p></div></div>`:`<p class="sub">Baseline before the pilot starts. Select Day 30, Day 60 or Day 90 to see the target values, the point at which the plan is adjusted, and the decision to be made.</p>`;
+    $('dash').innerHTML=`<div class="ind">${tiles}</div>${body}`;
+    $('cpb').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',+b.dataset.cp===planCp));
+  };
+  $('cpb').querySelectorAll('button').forEach(b=>b.onclick=()=>{planCp=+b.dataset.cp;dash()});
+  dash();
+}
+
+/* ---------- routing ---------- */
+const VIEWS={overview:renderOverview,business:renderBusiness,application:renderApplication,technology:renderTechnology,deployment:renderDeployment,metrics:renderMetrics,platform:renderPlatform,brief:renderBrief,plan:renderPlan};
+const done={};
+function show(v){
+  if(!VIEWS[v])v='overview';
+  if(!done[v]){VIEWS[v]();done[v]=1}
+  document.querySelectorAll('.view').forEach(s=>s.hidden=s.id!=='v-'+v);
+  document.querySelectorAll('#tabs button').forEach(b=>b.setAttribute('aria-selected',b.dataset.v===v));
+}
+document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{location.hash=b.dataset.v});
+addEventListener('hashchange',()=>show(location.hash.slice(1)));
+show(location.hash.slice(1));
+</script>
+
+</body></html>

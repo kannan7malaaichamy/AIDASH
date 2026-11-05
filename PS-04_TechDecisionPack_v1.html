@@ -1,0 +1,991 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PS04 Tech Decision Pack</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#05060a; --s1:rgba(255,255,255,.035); --s2:rgba(255,255,255,.06); --line:rgba(255,255,255,.09); --line2:rgba(255,255,255,.16);
+  --tx:#e8ebf2; --tx2:#b4bccb; --mu:#7d879b;
+  --cyan:#22d3ee; --blue:#60a5fa; --amber:#fbbf24; --grey:#a3adbf; --teal:#2dd4bf; --pink:#f472b6;
+  --ai:#a78bfa; --human:#34d399; --auto:#fb7185; --pain:#fb923c; --good:#34d399; --bad:#fb7185;
+}
+:root[data-theme="light"]{ --bg:#05060a; }
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+html,body{margin:0;background:var(--bg);color:var(--tx);font-family:Inter,"Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+body{background:
+  radial-gradient(900px 600px at 85% -10%, rgba(34,211,238,.10), transparent 60%),
+  radial-gradient(800px 600px at -10% 30%, rgba(167,139,250,.10), transparent 60%),
+  radial-gradient(700px 500px at 60% 110%, rgba(52,211,153,.07), transparent 60%), var(--bg);background-attachment:fixed}
+a{color:var(--cyan)}
+/* rail */
+.rail{position:fixed;left:0;top:0;bottom:0;width:250px;padding:26px 18px;border-right:1px solid var(--line);background:rgba(5,6,10,.75);backdrop-filter:blur(12px);z-index:20;display:flex;flex-direction:column;gap:4px;overflow-y:auto}
+.brand{font-weight:900;letter-spacing:-.02em;font-size:15px;margin-bottom:2px}
+.brand span{background:linear-gradient(90deg,var(--cyan),var(--ai));-webkit-background-clip:text;background-clip:text;color:transparent}
+.brandsub{font-size:11px;color:var(--mu);margin-bottom:18px}
+.chap{display:flex;gap:10px;align-items:flex-start;padding:7px 8px;border-radius:10px;cursor:pointer;color:var(--mu);font-size:12.5px;line-height:1.3;border:1px solid transparent;transition:.25s}
+.chap:hover{background:var(--s1);color:var(--tx2)}
+.chap.on{background:var(--s2);color:var(--tx);border-color:var(--line2)}
+.chap .d{flex:none;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font:700 10.5px "JetBrains Mono",monospace;border:1px solid var(--line2);color:var(--tx2)}
+.chap.on .d{background:linear-gradient(135deg,var(--cyan),var(--ai));color:#05060a;border-color:transparent}
+.grp{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mu);margin:12px 8px 4px}
+.prog{height:3px;background:var(--line);border-radius:3px;margin:14px 6px 10px;overflow:hidden}
+.prog i{display:block;height:100%;background:linear-gradient(90deg,var(--cyan),var(--ai));transition:width .3s}
+.tools{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto;padding-top:14px}
+.tb{background:var(--s1);border:1px solid var(--line2);color:var(--tx2);border-radius:8px;padding:6px 9px;font:600 11.5px Inter,sans-serif;cursor:pointer}
+.tb:hover{color:var(--tx);border-color:var(--cyan)}
+.tb.on{color:#05060a;background:var(--cyan);border-color:var(--cyan)}
+.keys{font-size:10.5px;color:var(--mu);margin-top:8px}
+/* main */
+main{margin-left:250px}
+section.ch{min-height:100vh;padding:64px 56px 48px;border-bottom:1px solid var(--line);position:relative}
+.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+.eyebrow{display:flex;gap:12px;align-items:center;font:600 11.5px "JetBrains Mono",monospace;color:var(--mu);letter-spacing:.06em;text-transform:uppercase}
+.eyebrow .pn{color:var(--cyan)}
+.eyebrow .dl{padding:2px 8px;border:1px solid var(--line2);border-radius:20px}
+h2.title{font-size:clamp(24px,3vw,36px);line-height:1.15;font-weight:900;letter-spacing:-.025em;margin:0;max-width:1050px}
+h2.title em{font-style:normal;background:linear-gradient(90deg,var(--cyan),var(--ai));-webkit-background-clip:text;background-clip:text;color:transparent}
+h3.h{margin:0 0 10px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--tx2);font-weight:700;display:flex;align-items:center;gap:8px}
+h3.h::before{content:"";width:14px;height:2px;background:var(--cyan);border-radius:2px}
+.card{background:var(--s1);border:1px solid var(--line);border-radius:16px;padding:18px 20px}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.g6{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.g5{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+/* flow (SVG cross-functional) */
+.flowbox{overflow-x:auto;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.015)}
+.flowbox svg{display:block;min-width:1000px;width:100%;height:auto}
+.fn{width:100%;height:100%;box-sizing:border-box;border-radius:9px;padding:5px 7px;border:1.5px solid rgba(255,255,255,.22);background:#11141c;color:var(--tx2);font:500 10px/1.25 Inter,sans-serif;display:flex;flex-direction:column;gap:1px;overflow:hidden;transition:opacity .3s}
+.fn b{font-size:11px;color:var(--tx);font-weight:700}
+.fn .tm{margin-top:auto;align-self:flex-start;font:700 9.5px "JetBrains Mono",monospace;color:#05060a;background:var(--amber);border-radius:4px;padding:1px 5px}
+.fn.pain{border-color:#fb923c;background:#22160d} .fn.ai{border-color:#a78bfa;background:#1a1530}
+.fn.human{border-color:#34d399;background:#0d1f17} .fn.auto{border-color:#fb7185;background:#231117}
+.fn .bdg{display:inline-block;font:800 9px "JetBrains Mono",monospace;color:#05060a;background:#a78bfa;border-radius:3px;padding:0 3px;margin-right:3px}
+.fn.pain .bdg{background:#fb923c}
+.el{display:flex;justify-content:center;align-items:center;width:100%;height:100%}
+.el span{font:700 9.5px "JetBrains Mono",monospace;padding:1px 6px;border-radius:10px;background:#05060a;border:1px solid;white-space:nowrap}
+.dimmed{opacity:.12}
+.fsum{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+.fsum span{font:700 11px "JetBrains Mono",monospace;padding:5px 10px;border-radius:20px;border:1px solid var(--line2);color:var(--tx2)}
+.fsum b{color:var(--tx)}
+.s73{display:grid;grid-template-columns:1.35fr 1fr;gap:18px}
+p,li{color:var(--tx2);font-size:14px;line-height:1.5}
+ul.b{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px}
+.small{font-size:12px;color:var(--mu);line-height:1.5}
+.reveal{opacity:0;transform:translateY(18px);transition:opacity .7s ease,transform .7s ease}
+.reveal.in{opacity:1;transform:none}
+/* tags */
+.tag{display:inline-block;font:700 9.5px "JetBrains Mono",monospace;letter-spacing:.03em;border-radius:4px;padding:2px 6px;margin-left:4px;vertical-align:1px;white-space:nowrap;border:1px solid}
+.tag.G{color:var(--blue);border-color:rgba(96,165,250,.4);background:rgba(96,165,250,.08)}
+.tag.A{color:var(--amber);border-color:rgba(251,191,36,.4);background:rgba(251,191,36,.08)}
+.tag.S{color:var(--grey);border-color:rgba(163,173,191,.35);background:rgba(163,173,191,.07)}
+.tag.C{color:var(--teal);border-color:rgba(45,212,191,.4);background:rgba(45,212,191,.08)}
+.tag.I{color:var(--pink);border-color:rgba(244,114,182,.4);background:rgba(244,114,182,.08)}
+.synth{align-self:flex-start;font:700 10.5px "JetBrains Mono",monospace;letter-spacing:.08em;color:var(--grey);border:1px dashed rgba(163,173,191,.5);padding:4px 10px;border-radius:6px}
+/* hero */
+.rec{font-size:clamp(17px,1.8vw,22px);line-height:1.4;font-weight:600;color:var(--tx);padding:20px 24px;border-radius:18px;background:linear-gradient(135deg,rgba(34,211,238,.12),rgba(167,139,250,.12));border:1px solid rgba(34,211,238,.3)}
+.kpi{position:relative;overflow:hidden;border-radius:18px;padding:20px 22px;background:var(--s1);border:1px solid var(--line)}
+.kpi::after{content:"";position:absolute;inset:auto -40px -60px auto;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(34,211,238,.18),transparent 70%)}
+.kpi .v{font-size:44px;font-weight:900;letter-spacing:-.04em;line-height:1;font-variant-numeric:tabular-nums}
+.kpi .v .arrow{color:var(--mu);font-weight:400;margin:0 6px}
+.kpi .v .to{background:linear-gradient(90deg,var(--cyan),var(--human));-webkit-background-clip:text;background-clip:text;color:transparent}
+.kpi .l{font-size:13px;color:var(--tx2);margin-top:10px;line-height:1.4}
+.line{display:grid;grid-template-columns:110px 1fr;gap:14px;align-items:baseline;padding:10px 0;border-top:1px solid var(--line)}
+.line .k{font:700 11px "JetBrains Mono",monospace;letter-spacing:.1em;color:var(--cyan);text-transform:uppercase}
+.line .t{font-size:14.5px;color:var(--tx2);line-height:1.45}
+.mini{position:relative;height:46px;margin:6px 56px 0}
+.mini .trk{position:absolute;left:0;right:0;top:20px;height:4px;border-radius:4px;background:linear-gradient(90deg,rgba(34,211,238,.5),rgba(167,139,250,.5),rgba(52,211,153,.5))}
+.mini .m{position:absolute;top:13px;transform:translateX(-50%);text-align:center}
+.mini .m i{display:block;width:16px;height:16px;margin:0 auto;transform:rotate(45deg);background:var(--bg);border:2px solid var(--cyan)}
+.mini .m span{display:block;font:600 10.5px "JetBrains Mono",monospace;color:var(--tx2);margin-top:6px;white-space:nowrap}
+/* tables */
+.tw{overflow-x:auto;border-radius:12px;border:1px solid var(--line)}
+table.t{border-collapse:collapse;width:100%;font-size:12.5px;line-height:1.4}
+table.t th{background:rgba(255,255,255,.05);color:var(--cyan);text-align:left;padding:9px 10px;font:700 10.5px "JetBrains Mono",monospace;letter-spacing:.06em;text-transform:uppercase;border-bottom:1px solid var(--line2);vertical-align:bottom}
+table.t td{padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--tx2)}
+table.t tr:last-child td{border-bottom:0}
+table.t tr:hover td{background:rgba(255,255,255,.025)}
+table.t td:first-child{color:var(--tx);font-weight:600}
+table.t.xs{font-size:11.5px} table.t.xs td,table.t.xs th{padding:6px 8px}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+/* tabs / segmented */
+.seg{display:inline-flex;gap:4px;padding:4px;border-radius:12px;background:var(--s1);border:1px solid var(--line);flex-wrap:wrap}
+.seg button{background:transparent;border:0;color:var(--tx2);font:600 12.5px Inter,sans-serif;padding:7px 14px;border-radius:9px;cursor:pointer}
+.seg button.on{background:var(--tx);color:#05060a}
+/* bars */
+.bar{display:grid;grid-template-columns:200px 1fr 70px;gap:12px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line)}
+.bar:last-child{border-bottom:0}
+.bar .n{font-size:13px;color:var(--tx);line-height:1.3}
+.bar .n small{display:block;color:var(--mu);font-size:11px}
+.bars{display:flex;flex-direction:column;gap:5px}
+.bt{display:flex;align-items:center;gap:8px;font:600 11px "JetBrains Mono",monospace;color:var(--tx2)}
+.bt .f{display:inline-block;min-width:4px;height:12px;border-radius:6px;transition:width 1.1s cubic-bezier(.2,.8,.2,1)}
+.bt .f.ai{background:linear-gradient(90deg,#7c3aed,var(--ai))}
+.bt .f.no{background:linear-gradient(90deg,#334155,#64748b)}
+.delta{font:800 15px "JetBrains Mono",monospace;text-align:right}
+.delta.good{color:var(--good)} .delta.bad{color:var(--bad)}
+.lg{display:flex;gap:14px;flex-wrap:wrap;font-size:11.5px;color:var(--mu);align-items:center}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:5px}
+/* swimlane */
+.swimbox{overflow-x:auto;border-radius:14px;border:1px solid var(--line)}
+.swim{display:grid;grid-template-columns:128px repeat(7,minmax(118px,1fr));min-width:980px;font-size:11px;overflow:hidden}
+.swim .hd{background:rgba(255,255,255,.05);color:var(--tx);font-weight:700;padding:9px 6px;text-align:center;position:relative;font-size:11.5px;border-bottom:1px solid var(--line2)}
+.swim .hd.st:not(:last-child)::after{content:"›";position:absolute;right:-5px;top:4px;color:var(--cyan);z-index:2;font-size:18px}
+.swim .ln{color:var(--tx2);font-weight:700;padding:8px 10px;display:flex;align-items:center;border-top:1px solid var(--line);font-size:11px;background:rgba(255,255,255,.02)}
+.swim .cl{border-top:1px solid var(--line);border-left:1px dashed var(--line);padding:5px;min-height:50px;display:flex;flex-direction:column;gap:4px}
+.nd{border-radius:8px;padding:6px 8px;line-height:1.3;border:1px solid var(--line2);background:rgba(255,255,255,.03);color:var(--tx2);transition:opacity .3s,filter .3s,box-shadow .3s}
+.nd b{display:block;font-size:11px;color:var(--tx);margin-bottom:1px}
+.nd.pain{border-color:rgba(251,146,60,.55);background:rgba(251,146,60,.09)}
+.nd.ai{border-color:rgba(167,139,250,.6);background:rgba(167,139,250,.11)}
+.nd.human{border-color:rgba(52,211,153,.55);background:rgba(52,211,153,.09)}
+.nd.auto{border-color:rgba(251,113,133,.55);background:rgba(251,113,133,.09)}
+.nd.dim{opacity:.16;filter:grayscale(1)}
+.nd.glow{box-shadow:0 0 0 1px currentColor,0 0 22px rgba(167,139,250,.25)}
+.badge{display:inline-block;font:800 9.5px "JetBrains Mono",monospace;color:#05060a;background:var(--ai);border-radius:4px;padding:0 4px;margin-right:4px}
+.badge.p{background:var(--pain)}
+.safe{border-radius:14px;padding:12px 16px;font-size:13px;color:var(--tx2);border:1px solid rgba(251,191,36,.35);background:rgba(251,191,36,.06)}
+.safe b{color:var(--amber)}
+/* options */
+.opt{border-radius:18px;padding:18px;background:var(--s1);border:1px solid var(--line);display:flex;flex-direction:column;gap:10px;position:relative}
+.opt.best{border-color:rgba(34,211,238,.6);background:linear-gradient(180deg,rgba(34,211,238,.08),rgba(167,139,250,.05));box-shadow:0 0 50px rgba(34,211,238,.08)}
+.opt .nm{font-weight:800;font-size:16px;color:var(--tx)}
+.opt .rib{position:absolute;top:-11px;right:16px;font:800 10px "JetBrains Mono",monospace;letter-spacing:.08em;background:var(--cyan);color:#05060a;padding:4px 9px;border-radius:20px}
+.kv{display:grid;grid-template-columns:96px 1fr;gap:8px;font-size:12.5px;color:var(--tx2);line-height:1.4}
+.kv b{color:var(--mu);font:700 10px "JetBrains Mono",monospace;letter-spacing:.06em;text-transform:uppercase;padding-top:2px}
+.slider{display:grid;grid-template-columns:96px 1fr;gap:8px;align-items:center;font-size:11px;color:var(--mu)}
+.slider .tr{position:relative;height:6px;border-radius:6px;background:linear-gradient(90deg,rgba(251,113,133,.35),rgba(52,211,153,.35))}
+.slider .tr i{position:absolute;top:-4px;width:14px;height:14px;border-radius:50%;background:var(--tx);transform:translateX(-50%);box-shadow:0 0 10px rgba(255,255,255,.4)}
+.slider .ends{display:flex;justify-content:space-between;font-size:9.5px;color:var(--mu);margin-top:3px}
+.sh{border-radius:14px;padding:12px 14px;background:var(--s1);border:1px solid var(--line)}
+.sh .r{font-weight:800;color:var(--tx);font-size:13px}
+.sh .f{font-size:12px;color:var(--bad);margin:4px 0}
+.sh .a{font-size:12px;color:var(--good)}
+.stack{display:flex;height:28px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.stack div{display:grid;place-items:center;font:700 10px "JetBrains Mono",monospace;color:#05060a;overflow:hidden;white-space:nowrap}
+.vbar{display:grid;grid-template-columns:150px 1fr 80px;gap:10px;align-items:center;font-size:12.5px;padding:5px 0}
+.vbar .f{display:block;height:14px;border-radius:7px;transition:width 1s}
+.big{font-size:42px;font-weight:900;letter-spacing:-.03em}
+/* timeline */
+.tl{position:relative;padding:8px 0 4px}
+.tlrow{position:relative;height:34px;margin:4px 0;border-radius:8px;background:rgba(255,255,255,.02)}
+.tlrow .lab{position:absolute;left:-118px;width:110px;text-align:right;top:9px;font:700 10px "JetBrains Mono",monospace;color:var(--mu);letter-spacing:.06em;text-transform:uppercase}
+.band{position:absolute;top:4px;bottom:4px;border-radius:6px;display:flex;align-items:center;padding:0 8px;font:700 10.5px "JetBrains Mono",monospace;white-space:nowrap;overflow:hidden}
+.pin{position:absolute;top:5px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center}
+.pin i{width:12px;height:12px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px var(--cyan)}
+.pin.g i{border-radius:2px;transform:rotate(45deg);background:var(--human);box-shadow:0 0 14px var(--human)}
+.pin.r i{background:var(--ai);box-shadow:0 0 12px var(--ai)}
+.pin span{font:600 9.5px "JetBrains Mono",monospace;color:var(--tx2);white-space:nowrap;margin-top:3px}
+.axis{position:relative;height:20px;margin-top:4px}
+.axis span{position:absolute;transform:translateX(-50%);font:600 10px "JetBrains Mono",monospace;color:var(--mu)}
+.tlwrap{padding:0 54px 0 118px;overflow-x:auto;overflow-y:hidden}
+.tlinner{min-width:760px}
+.gate{border-radius:16px;padding:16px;border:1px solid rgba(52,211,153,.35);background:rgba(52,211,153,.05)}
+.gate .d{font:800 12px "JetBrains Mono",monospace;color:var(--human);margin-bottom:8px}
+.gate p{margin:4px 0;font-size:12.5px}
+.gate .c{color:var(--good)} .gate .a{color:var(--amber)} .gate .s{color:var(--bad)}
+/* team */
+.team{border-radius:18px;padding:18px;background:var(--s1);border:1px solid var(--line)}
+.team .nm{font-weight:800;font-size:16px}
+.meter{height:8px;border-radius:8px;background:rgba(255,255,255,.07);overflow:hidden;margin:8px 0 4px}
+.meter i{display:block;height:100%;border-radius:8px;transition:width 1.2s}
+.pill{display:inline-block;font:700 10px "JetBrains Mono",monospace;border-radius:20px;padding:3px 9px;border:1px solid var(--line2);color:var(--tx2);margin:2px 4px 2px 0}
+/* indicators */
+.ind{border-radius:18px;padding:18px;background:var(--s1);border:1px solid var(--line);display:flex;flex-direction:column;gap:8px}
+.ind .nm{font-weight:800;color:var(--tx);font-size:14.5px}
+.ind .bt2{display:flex;align-items:center;gap:10px;font-weight:900;font-size:22px;letter-spacing:-.02em}
+.ind .bt2 .b0{color:var(--tx2)} .ind .bt2 .b1{color:var(--human)}
+.ind .meta{font-size:11.5px;color:var(--mu);line-height:1.45}
+.ind .lead{align-self:flex-start;font:700 9.5px "JetBrains Mono",monospace;padding:2px 8px;border-radius:20px}
+.ld{color:var(--cyan);border:1px solid rgba(34,211,238,.4)} .lg2{color:var(--amber);border:1px solid rgba(251,191,36,.4)}
+.ask{display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.ask .dt{font:800 12px "JetBrains Mono",monospace;color:#05060a;background:var(--cyan);border-radius:8px;padding:6px 8px;text-align:center}
+/* ai usage */
+.flow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.flow span{padding:8px 14px;border-radius:30px;border:1px solid var(--line2);font-weight:700;font-size:13px;color:var(--tx)}
+.flow em{color:var(--cyan);font-style:normal}
+.person{display:grid;grid-template-columns:52px 1fr;gap:14px;padding:14px 0;border-top:1px solid var(--line)}
+.av{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-weight:900;color:#05060a;font-size:17px}
+.person .who{font-weight:800;color:var(--tx);font-size:15px}
+.person .role{font-size:11.5px;color:var(--mu)}
+.person .ask2{font-size:13.5px;color:var(--tx2);margin-top:4px;line-height:1.45}
+.person .fix{font-size:12.5px;color:var(--human);margin-top:4px}
+.hi{color:var(--amber);font-weight:700}
+/* notes */
+.note{display:none;border-left:3px solid var(--ai);background:rgba(167,139,250,.07);padding:10px 14px;border-radius:0 10px 10px 0;font-size:13px;color:var(--tx2)}
+.shownotes .note{display:block}
+.foot{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font:500 10.5px "JetBrains Mono",monospace;color:var(--mu);border-top:1px solid var(--line);padding-top:10px;margin-top:6px}
+pre.code{background:#0b0d14;color:#cbd5e1;border-radius:12px;border:1px solid var(--line);padding:12px 14px;font:11px/1.5 "JetBrains Mono",Consolas,monospace;overflow:auto;margin:0;white-space:pre;max-height:340px}
+.btn{background:var(--s2);color:var(--tx);border:1px solid var(--line2);border-radius:8px;padding:6px 11px;font:600 12px Inter,sans-serif;cursor:pointer;margin-right:6px}
+.btn:hover{border-color:var(--cyan)}
+.mer{background:#0b0d14;border:1px solid var(--line);border-radius:12px;padding:8px;overflow:auto}
+.mer svg{max-width:100%;height:auto}
+.script{columns:2;column-gap:34px}
+.script p{margin:0 0 12px;font-size:14.5px;line-height:1.65;color:var(--tx2)}
+.script b{color:var(--tx)}
+ol.titles li{margin:6px 0;font-size:15px;color:var(--tx)}
+@media (max-width: 1000px){
+  .rail{position:sticky;top:0;width:auto;height:auto;flex-direction:row;align-items:center;overflow-x:auto;padding:10px 12px;border-right:0;border-bottom:1px solid var(--line)}
+  .brandsub,.grp,.prog,.keys,.chap .tx{display:none}
+  .brand{margin:0 8px 0 0;white-space:nowrap}
+  .tools{margin:0 0 0 8px;flex-wrap:nowrap;padding:0}
+  main{margin-left:0}
+  section.ch{padding:40px 16px 32px}
+  .g2,.g3,.g4,.g5,.g6,.s73{grid-template-columns:1fr}
+  .bar{grid-template-columns:1fr;gap:4px}
+  .delta{text-align:left}
+  .script{columns:1}
+  .line{grid-template-columns:1fr;gap:2px}
+}
+@media print{
+  .rail{display:none} main{margin-left:0}
+  *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  section.ch{min-height:auto;page-break-after:always;break-after:page}
+  .reveal{opacity:1;transform:none}
+  .note{display:block}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/htm@3.1.1/dist/htm.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.1/dist/mermaid.min.js"></script>
+<script>
+const SOURCE_HTML = "<!doctype html>\n" + document.documentElement.outerHTML;
+const { useState, useEffect, useRef } = React;
+const html = htm.bind(React.createElement);
+const FILE = "[TeamName]_PS04_TechDecisionPack_v1";
+const NMAIN = 7;
+
+/* ================= helpers ================= */
+const TAGN = {G:"GIVEN",A:"ASSUMPTION",S:"ILLUSTRATIVE-SYNTHETIC",C:"CALCULATED",I:"INDUSTRY PATTERN"};
+const Tag = ({k}) => html`<span className=${"tag "+k}>${TAGN[k]}</span>`;
+const Synth = () => html`<span className="synth">ILLUSTRATIVE - SYNTHETIC DATA · shows the method, not evidence of real results</span>`;
+const Table = ({head, rows, cls="", numCols=[]}) => html`<div className="tw"><table className=${"t "+cls}>
+  <thead><tr>${head.map((h,i)=>html`<th key=${i} className=${numCols.includes(i)?"num":""}>${h}</th>`)}</tr></thead>
+  <tbody>${rows.map((r,ri)=>html`<tr key=${ri}>${r.map((c,ci)=>html`<td key=${ci} className=${numCols.includes(ci)?"num":""}>${c===null||c===undefined||c===""?"—":c}</td>`)}</tr>`)}</tbody></table></div>`;
+const toCSV = t => [t.head, ...t.rows].map(r=>r.map(c=>{const s=(c===null||c===undefined)?"":String(c);return /[",]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;}).join(",")).join("\n");
+const download = (name, text, type="text/csv") => { const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([text],{type})); a.download=name; document.body.appendChild(a); a.click(); a.remove(); };
+const copy = text => navigator.clipboard && navigator.clipboard.writeText(text);
+
+function useInView(){
+  const ref=useRef(null); const [v,setV]=useState(false);
+  useEffect(()=>{ const el=ref.current; if(!el) return; let done=false, io=null;
+    const stop=()=>{ done=true; window.removeEventListener("scroll",check); window.removeEventListener("resize",check); window.removeEventListener("beforeprint",show); io&&io.disconnect(); };
+    const show=()=>{ if(!done){ setV(true); stop(); } };
+    function check(){ const r=el.getBoundingClientRect(); if(r.top<window.innerHeight*0.95 && r.bottom>0) show(); }
+    window.addEventListener("scroll",check,{passive:true}); window.addEventListener("resize",check); window.addEventListener("beforeprint",show);
+    if("IntersectionObserver" in window){ io=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting) show(); }),{threshold:.1}); io.observe(el); }
+    const t=setTimeout(check,60);
+    return ()=>{ clearTimeout(t); stop(); }; },[]);
+  return [ref,v];
+}
+function R({children, d=0, cls=""}){ const [ref,v]=useInView(); return html`<div ref=${ref} className=${"reveal "+cls+(v?" in":"")} style=${{transitionDelay:d+"ms"}}>${children}</div>`; }
+function Count({to, dec=0, pre="", suf=""}){
+  const [ref,v]=useInView(); const [x,setX]=useState(0);
+  useEffect(()=>{ if(!v) return; let raf, t0; const dur=1200;
+    const step=t=>{ if(!t0) t0=t; const p=Math.min((t-t0)/dur,1); setX(to*(1-Math.pow(1-p,3))); if(p<1) raf=requestAnimationFrame(step); };
+    raf=requestAnimationFrame(step); return ()=>cancelAnimationFrame(raf); },[v,to]);
+  return html`<span ref=${ref}>${pre}${x.toFixed(dec)}${suf}</span>`;
+}
+
+/* ================= synthetic data ================= */
+const T1 = {name:"T1_requirements", head:["Story ID","Team","Epic","Story points","Clarification rounds","Idea-to-ready (days)","Defects traced to requirement gaps","AI-assisted"],
+rows:[["US-01","Checkout & Payments","Promo-code & cart discount rules",5,4,9,2,"N"],["US-02","Checkout & Payments","Promo-code & cart discount rules",8,5,12,3,"N"],["US-03","Checkout & Payments","Promo-code & cart discount rules",3,3,6,1,"N"],["US-04","Checkout & Payments","Promo-code & cart discount rules",5,2,4,0,"Y"],["US-05","Catalog & Search","Search filters & relevance",3,2,5,1,"N"],["US-06","Catalog & Search","Search filters & relevance",5,3,7,null,"N"],["US-07","Catalog & Search","Search filters & relevance",5,1,3,1,"Y"],["US-08","Catalog & Search","Search filters & relevance",8,2,4,0,"Y"],["US-09","Mobile App","Wishlist",3,3,6,1,"N"],["US-10","Mobile App","Wishlist",5,1,2,1,"Y"],["US-11","Mobile App","Mobile checkout flow",13,6,21,2,"Y"],["US-12","Mobile App","Mobile checkout flow",3,2,3,0,"Y"]]};
+const T2 = {name:"T2_coding", head:["Team","Sprint","PRs merged","Avg PR size (lines changed)","Review turnaround (h)","Rework %","Build failures","AI-assisted share of PRs %","Security findings flagged in review"],
+rows:[["Checkout & Payments","S1",22,180,20,14,6,10,2],["Checkout & Payments","S2",25,210,22,15,7,15,2],["Checkout & Payments","S3",24,195,26,13,5,20,3],["Catalog & Search","S1",30,220,14,12,4,35,1],["Catalog & Search","S2",34,290,18,15,5,40,1],["Catalog & Search","S3",36,310,21,16,null,45,2],["Mobile App","S1",40,340,24,18,8,60,1],["Mobile App","S2",44,820,41,22,9,65,2],["Mobile App","S3",42,360,26,17,7,70,1]]};
+const T3 = {name:"T3_testing", head:["Team","Release","Regression person-days","Automated test count","Flaky test %","Escaped defects","Test-generation AI used"],
+rows:[["Checkout & Payments","R1",1.75,640,9,3,"N"],["Checkout & Payments","R2",1.80,655,11,4,"N"],["Checkout & Payments","R3",1.85,670,12,3,"N"],["Catalog & Search","R1",0.95,820,5,2,"N"],["Catalog & Search","R2",0.80,910,6,1,"Y"],["Catalog & Search","R3",0.70,980,4,1,"Y"],["Mobile App","R1",0.80,1100,14,2,"Y"],["Mobile App","R2",0.90,1350,18,2,"Y"],["Mobile App","R3",0.95,null,22,3,"Y"]]};
+const T4 = {name:"T4_security_findings", head:["ID","Team / code area","Severity","Source","Caught in review or escaped","Class"],
+rows:[["F01","Checkout & Payments / promotions","High","AI-assisted","Escaped","Broken access control (promo applied to another user's cart)"],["F02","Checkout & Payments / order lookup","High","Human","Escaped","Injection (SQL)"],["F03","Checkout & Payments / payment config","High","AI-assisted","Escaped","Secrets (hard-coded sandbox key)"],["F04","Catalog & Search / search API","High","Human","Escaped","Injection (query)"],["F05","Checkout & Payments / cart","High","AI-assisted","Caught in review","Broken access control"],["F06","Checkout & Payments / promotions","Medium","AI-assisted","Caught in review","Missing input validation"],["F07","Mobile App / checkout screen","Medium","AI-assisted","Caught in review","Personal data in logs"],["F08","Mobile App / API client","High","AI-assisted","Caught in review","Secrets (token in code)"],["F09","Catalog & Search / indexer","Medium","Human","Caught in review","Vulnerable dependency"],["F10","Checkout & Payments / payments","Medium","Human","Caught in review","Personal data in logs"]]};
+const T5 = {name:"T5_developer_experience", head:["Team","Respondents (of team size)","Confidence in AI output","Review load manageable","Focus / flow","Tool fits our codebase","Overall satisfaction"],
+rows:[["Checkout & Payments","15 of 18",2.4,3.1,2.9,2.2,2.8],["Catalog & Search","11 of 14",3.3,2.9,3.4,3.5,null],["Mobile App","13 of 16",3.8,2.3,3.6,3.9,3.5]]};
+const TABLES=[T1,T2,T3,T4,T5];
+
+/* ================= swimlanes ================= */
+const STAGES=["Requirements","Design","Coding","Peer review","Testing","Security review","Release"];
+function Swim({lanes, filter="all"}){
+  return html`<div className="swimbox"><div className="swim">
+    <div className="hd">Lane · Stage</div>
+    ${STAGES.map(s=>html`<div className="hd st" key=${s}>${s}</div>`)}
+    ${lanes.map(l=>[
+      html`<div className="ln" key=${l.name}>${l.name}</div>`,
+      ...STAGES.map((s,i)=>html`<div className="cl" key=${l.name+i}>${(l.cells[i]||[]).map((c,j)=>{
+        const k=c.k||"plain"; const dim = filter!=="all" && k!==filter;
+        return html`<div key=${j} className=${"nd "+k+(dim?" dim":"")}>${c.a && html`<span className=${"badge"+(k==="pain"?" p":"")}>${c.a}</span>`}<b>${c.t}</b>${c.s}</div>`;})}</div>`)
+    ])}</div></div>`;
+}
+const BEFORE=[
+ {name:"Product owner",cells:{0:[{k:"pain",a:"A1",t:"Writes stories by hand",s:"3.3 clarification rounds; 7.5 days idea-to-ready"}]}},
+ {name:"Developers",cells:{1:[{t:"Design",s:"Unchanged"}],2:[{k:"pain",a:"A2",t:"Codes; ad-hoc AI use",s:"Rework 13.5%; no AI label"}],3:[{k:"pain",t:"Peer review",s:"20.5 h turnaround"}]}},
+ {name:"QA",cells:{4:[{k:"pain",a:"A3",t:"Re-runs full regression",s:"9 person-days per release (GIVEN); flaky 9.25%"}]}},
+ {name:"Security",cells:{5:[{k:"pain",t:"Late, end-of-cycle review",s:"7 high findings in 2 quarters escaped (GIVEN)"}]}},
+ {name:"Release manager",cells:{6:[{t:"Release",s:"One major release every 6 weeks (GIVEN)"}]}},
+];
+const AFTER=[
+ {name:"Product owner",cells:{0:[{k:"human",t:"✔ PO approves story",s:"Definition of ready incl. security & non-functional"}]}},
+ {name:"AI assistant (approved tools)",cells:{0:[{k:"ai",a:"A1",t:"Drafts stories & criteria",s:"Edge, security, non-functional cases"}],2:[{k:"ai",a:"A2",t:"Suggests code",s:"Approved repos only"}],3:[{k:"ai",t:"Review assist",s:"Flags risky diffs"}],4:[{k:"ai",a:"A3",t:"Tests & synthetic data",s:"Risk-based regression; flaky triage"}]}},
+ {name:"Developers / code owners",cells:{1:[{t:"Design",s:"Unchanged"}],2:[{k:"human",t:"Developer owns change",s:"AI-assisted label; ≤400 lines"}],3:[{k:"human",t:"✔ Code-owner approval",s:"Mandatory"}]}},
+ {name:"QA",cells:{4:[{k:"human",t:"✔ QA lead approves suite",s:"Flaky tests quarantined"}]}},
+ {name:"Security (AppSec)",cells:{3:[{k:"human",t:"✔ Human AppSec review",s:"All checkout & payment PRs"}],5:[{k:"human",t:"Security review",s:"Stays mandatory"}]}},
+ {name:"Pipeline (automation)",cells:{2:[{k:"auto",t:"Secret scanning",s:"Pre-commit + pipeline"}],3:[{k:"auto",t:"SAST / SCA",s:"Blocks merge on High"}],4:[{k:"auto",t:"Regression gate",s:"Must pass"}],6:[{k:"auto",t:"Audit log",s:"Every AI-assisted change"}]}},
+ {name:"Release manager",cells:{6:[{k:"human",t:"✔ Release approval",s:"Freeze rules at sale peaks"}]}},
+];
+
+/* ================= SVG cross-functional flow ================= */
+const FW=1180, FLW=124, FHH=40, FLH=104, FNW=134, FNH=82;
+const EC={flow:"#cbd5e1",handoff:"#22d3ee",loop:"#fb923c",ai:"#a78bfa",auto:"#fb7185"};
+function Flow({g, filter="all", idp}){
+  const cw=(FW-FLW)/7, H=FHH+g.lanes.length*FLH;
+  const lt=l=>FHH+l*FLH, gx=c=>FLW+(c+1)*cw;
+  const N={}; g.nodes.forEach(n=>{ const x=FLW+n.c*cw+(cw-FNW)/2, y=lt(n.l)+(FLH-FNH)/2; N[n.id]={...n,x,y,cx:x+FNW/2,cy:y+FNH/2}; });
+  const route=e=>{ const a=N[e.f], b=N[e.t]; let d,lx,ly;
+    if(e.r==="h"){ d=`M${a.x+FNW} ${a.cy} L${b.x-2} ${b.cy}`; lx=(a.x+FNW+b.x)/2; ly=a.cy-11; }
+    else if(e.r==="v"){ const dn=b.l>a.l, x=a.cx+(e.dx||0); d=`M${x} ${dn?a.y+FNH:a.y} L${x} ${dn?b.y-2:b.y+FNH+2}`; lx=x; ly=dn?lt(a.l+1):lt(a.l); }
+    else if(e.r==="g"){ const gg=gx(a.c), tx=b.c>a.c?b.x-2:b.x+FNW+2; d=`M${a.x+FNW} ${a.cy} L${gg} ${a.cy} L${gg} ${b.cy} L${tx} ${b.cy}`; lx=gg; ly=b.l>a.l?lt(a.l+1):lt(a.l); }
+    else { const sx=a.cx-(e.dx||20), tx=b.cx+(e.tx||0), yb=lt(a.l)+FLH-3; d=`M${sx} ${a.y+FNH} L${sx} ${yb} L${tx} ${yb} L${tx} ${b.y+FNH+2}`; lx=(sx+tx)/2; ly=yb+3; }
+    if(e.lb!==undefined && e.ly!==undefined) ly=lt(e.ly);
+    return {d,lx,ly}; };
+  const keepNode=n=>filter==="all"||n.k===filter;
+  const keepEdge=e=>filter==="all"||(filter==="ai"&&e.k==="ai")||(filter==="human"&&(N[e.f].k==="human"||N[e.t].k==="human")&&e.k!=="ai")||(filter==="auto"&&(N[e.f].k==="auto"||N[e.t].k==="auto"));
+  const mk=k=>`url(#${idp}-${k})`;
+  return html`<div className="flowbox"><svg viewBox=${`0 0 ${FW} ${H}`} xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Cross-functional flowchart">
+    <defs>${Object.keys(EC).map(k=>html`<marker key=${k} id=${idp+"-"+k} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill=${EC[k]}/></marker>`)}</defs>
+    ${g.lanes.map((ln,i)=>html`<g key=${"l"+i}><rect x="0" y=${lt(i)} width=${FW} height=${FLH} fill=${i%2?"rgba(255,255,255,.025)":"rgba(255,255,255,.0)"}/>
+      <line x1="0" x2=${FW} y1=${lt(i)} y2=${lt(i)} stroke="rgba(255,255,255,.08)"/>
+      <foreignObject x="8" y=${lt(i)} width=${FLW-14} height=${FLH}><div style=${{height:"100%",display:"flex",alignItems:"center",font:"700 11px Inter",color:"#b4bccb",lineHeight:1.25}}>${ln}</div></foreignObject></g>`)}
+    <line x1=${FLW} x2=${FLW} y1="0" y2=${H} stroke="rgba(255,255,255,.12)"/>
+    ${STAGES.map((s,i)=>html`<g key=${"s"+i}><rect x=${FLW+i*cw+3} y="6" width=${cw-6} height="26" rx="13" fill="rgba(34,211,238,.10)" stroke="rgba(34,211,238,.35)"/>
+      <text x=${FLW+i*cw+cw/2} y="23" textAnchor="middle" fill="#e8ebf2" style=${{font:"700 11.5px Inter"}}>${s}</text>
+      ${i<6 && html`<path d=${`M${FLW+(i+1)*cw-4} 13 l7 6 l-7 6`} fill="none" stroke="#22d3ee" strokeWidth="2"/>`}
+      ${i>0 && html`<line x1=${FLW+i*cw} x2=${FLW+i*cw} y1=${FHH} y2=${H} stroke="rgba(255,255,255,.05)" strokeDasharray="3 4"/>`}</g>`)}
+    ${g.edges.map((e,i)=>{ const r=route(e); const k=e.k; const dim=!keepEdge(e);
+      return html`<path key=${"e"+i} d=${r.d} fill="none" stroke=${EC[k]} strokeWidth=${k==="handoff"?2.4:2} strokeDasharray=${k==="loop"?"6 4":k==="ai"?"2 4":"none"} markerEnd=${mk(k)} strokeLinejoin="round" className=${dim?"dimmed":""}/>`; })}
+    ${g.nodes.map(n=>{ const p=N[n.id]; return html`<foreignObject key=${n.id} x=${p.x} y=${p.y} width=${FNW} height=${FNH} className=${keepNode(n)?"":"dimmed"}>
+      <div className=${"fn "+(n.k||"")}><b>${n.a && html`<span className="bdg">${n.a}</span>`}${n.t}</b><span>${n.s}</span>${n.tm && html`<span className="tm">⏱ ${n.tm}</span>`}</div></foreignObject>`; })}
+    ${g.edges.filter(e=>e.lb).map((e,i)=>{ const r=route(e); const dim=!keepEdge(e);
+      return html`<foreignObject key=${"lb"+i} x=${r.lx-80} y=${r.ly-9} width="160" height="18" className=${dim?"dimmed":""}><div className="el"><span style=${{color:EC[e.k],borderColor:EC[e.k]}}>${e.lb}</span></div></foreignObject>`; })}
+  </svg></div>
+  <div className="fsum">
+    <span><b>${g.edges.filter(e=>e.k==="handoff").length}</b> handoffs between roles</span>
+    <span><b>${g.edges.filter(e=>e.k==="handoff"&&(N[e.f].k==="auto"||N[e.t].k==="auto")).length}</b> of them automated</span>
+    <span><b>${g.edges.filter(e=>e.k==="loop").length}</b> rework loop${g.edges.filter(e=>e.k==="loop").length===1?"":"s"}</span>
+    ${g.edges.some(e=>e.k==="ai") && html`<span><b>${g.edges.filter(e=>e.k==="ai").length}</b> AI assists, each into a human owner</span>`}
+    <span style=${{borderColor:"var(--amber)"}}>⏱ step times: ${g.timeNote}</span></div>
+  <div className="lg" style=${{marginTop:"8px"}}>
+    <span><svg width="26" height="8"><line x1="0" y1="4" x2="26" y2="4" stroke=${EC.flow} strokeWidth="2"/></svg> flow within a role</span>
+    <span><svg width="26" height="8"><line x1="0" y1="4" x2="26" y2="4" stroke=${EC.handoff} strokeWidth="2.4"/></svg> handoff to another role</span>
+    <span><svg width="26" height="8"><line x1="0" y1="4" x2="26" y2="4" stroke=${EC.loop} strokeWidth="2" strokeDasharray="6 4"/></svg> rework loop</span>
+    <span><svg width="26" height="8"><line x1="0" y1="4" x2="26" y2="4" stroke=${EC.ai} strokeWidth="2" strokeDasharray="2 4"/></svg> AI assist</span>
+    <span><svg width="26" height="8"><line x1="0" y1="4" x2="26" y2="4" stroke=${EC.auto} strokeWidth="2"/></svg> automated check</span></div>`;
+}
+const BF={lanes:["Product owner","Developers","QA","Security","Release manager"],
+ timeNote:"ILLUSTRATIVE-SYNTHETIC (T1–T3) or ASSUMPTION; 9 person-days and 6 weeks GIVEN",
+ nodes:[
+  {id:"r",l:0,c:0,k:"pain",a:"A1",t:"Writes stories by hand",s:"3.3 clarification rounds",tm:"7.5 days"},
+  {id:"d",l:1,c:1,t:"Design",s:"Unchanged",tm:"2 days"},
+  {id:"c",l:1,c:2,k:"pain",a:"A2",t:"Codes; ad-hoc AI",s:"Opens PR; no label, no size cap",tm:"5 days"},
+  {id:"p",l:1,c:3,k:"pain",t:"Peer review",s:"Large PRs wait in queue",tm:"20.5 h"},
+  {id:"t",l:2,c:4,k:"pain",a:"A3",t:"Full regression",s:"Flaky 9.25% → re-runs",tm:"9 person-days/release"},
+  {id:"s",l:3,c:5,k:"pain",t:"Late security review",s:"7 high findings in 2 quarters",tm:"3 days"},
+  {id:"l",l:4,c:6,t:"Release",s:"Every 6 weeks",tm:"1 day"}],
+ edges:[
+  {f:"r",t:"d",r:"g",k:"handoff",lb:"story →"},
+  {f:"d",t:"c",r:"h",k:"flow"},
+  {f:"c",t:"p",r:"h",k:"flow"},
+  {f:"p",t:"t",r:"g",k:"handoff",lb:"build → QA"},
+  {f:"t",t:"s",r:"g",k:"handoff",lb:"candidate → AppSec"},
+  {f:"s",t:"l",r:"g",k:"handoff",lb:"sign-off →"},
+  {f:"p",t:"c",r:"loop",k:"loop",lb:"rework 13.5%",dx:22,tx:-22},
+  {f:"s",t:"c",r:"loop",k:"loop",lb:"late finding → recode",dx:22,tx:24}]};
+const AF={lanes:["Product owner","AI assistant (approved tools)","Developers / code owners","QA","Pipeline (automation)","Security (AppSec)","Release manager"],
+ timeNote:"targets are ASSUMPTION until Day-30 baselines replace them",
+ nodes:[
+  {id:"ai1",l:1,c:0,k:"ai",a:"A1",t:"Drafts stories & criteria",s:"Edge, security, non-functional"},
+  {id:"r",l:0,c:0,k:"human",t:"✔ PO approves story",s:"Definition of ready",tm:"target 5.0 days"},
+  {id:"d",l:2,c:1,t:"Design",s:"Unchanged",tm:"2 days"},
+  {id:"ai2",l:1,c:2,k:"ai",a:"A2",t:"Suggests code",s:"Approved repos only"},
+  {id:"c",l:2,c:2,k:"human",t:"Developer owns change",s:"AI label · ≤400 lines",tm:"5 days"},
+  {id:"g1",l:4,c:2,k:"auto",t:"Secret scanning",s:"Every commit",tm:"automatic"},
+  {id:"g2",l:4,c:3,k:"auto",t:"SAST / SCA",s:"Every PR; blocks High",tm:"automatic"},
+  {id:"ai3",l:1,c:3,k:"ai",t:"Review assist",s:"Flags risky diffs"},
+  {id:"p",l:2,c:3,k:"human",t:"✔ Code-owner approval",s:"Mandatory",tm:"≤ baseline +10%"},
+  {id:"as",l:5,c:3,k:"human",t:"✔ Human AppSec review",s:"Checkout & payment PRs"},
+  {id:"ai4",l:1,c:4,k:"ai",a:"A3",t:"Tests & synthetic data",s:"Risk-based regression"},
+  {id:"t",l:3,c:4,k:"human",t:"✔ QA lead approves suite",s:"Flaky tests quarantined",tm:"target 6 person-days"},
+  {id:"rg",l:4,c:4,k:"auto",t:"Regression gate",s:"Must pass",tm:"automatic"},
+  {id:"s",l:5,c:5,k:"human",t:"Security review",s:"Stays mandatory",tm:"target 2 days"},
+  {id:"l",l:6,c:6,k:"human",t:"✔ Release approval",s:"Sale-peak freeze",tm:"1 day"},
+  {id:"au",l:4,c:6,k:"auto",t:"Audit log",s:"Every AI-assisted change"}],
+ edges:[
+  {f:"ai1",t:"r",r:"v",k:"ai"},
+  {f:"r",t:"d",r:"g",k:"handoff",lb:"approved story →"},
+  {f:"d",t:"c",r:"h",k:"flow"},
+  {f:"ai2",t:"c",r:"v",k:"ai"},
+  {f:"c",t:"g1",r:"v",k:"handoff",lb:"commit",ly:4},
+  {f:"g1",t:"g2",r:"h",k:"auto"},
+  {f:"g2",t:"p",r:"v",k:"handoff",lb:"clean scan",ly:4},
+  {f:"ai3",t:"p",r:"v",k:"ai"},
+  {f:"p",t:"c",r:"loop",k:"loop",lb:"changes requested",dx:22,tx:-22},
+  {f:"p",t:"t",r:"g",k:"handoff",lb:"merged build →"},
+  {f:"p",t:"as",r:"g",k:"handoff",lb:"checkout & payments",ly:5},
+  {f:"ai4",t:"t",r:"v",k:"ai"},
+  {f:"t",t:"rg",r:"v",k:"auto"},
+  {f:"rg",t:"s",r:"g",k:"handoff",lb:"candidate →"},
+  {f:"s",t:"l",r:"g",k:"handoff",lb:"sign-off →"},
+  {f:"l",t:"au",r:"v",k:"auto",lb:"logged",ly:5}]};
+
+/* ================= mermaid ================= */
+const MER_BEFORE=`flowchart LR
+  subgraph PO["Product owner"]
+    R["Requirements - A1<br/>3.3 clarification rounds<br/>7.5 days idea-to-ready"]
+  end
+  subgraph DEV["Developers"]
+    D["Design"]
+    C["Coding - A2<br/>rework 13.5 percent"]
+    P["Peer review<br/>20.5 h turnaround"]
+  end
+  subgraph QA["QA"]
+    T["Testing - A3<br/>9 person-days per release<br/>flaky 9.25 percent"]
+  end
+  subgraph SEC["Security"]
+    S["Security review - late<br/>7 high findings in 2 quarters escaped"]
+  end
+  subgraph REL["Release manager"]
+    L["Release<br/>one major release every 6 weeks"]
+  end
+  R --> D --> C --> P --> T --> S --> L
+  classDef pain fill:#3b2414,stroke:#fb923c,color:#fde7d3
+  class R,C,P,T,S pain`;
+const MER_AFTER=`flowchart LR
+  subgraph AI["AI assistant - approved tools, approved repositories only"]
+    AI1["A1: drafts stories and acceptance criteria"]
+    AI2["A2: suggests code and review hints"]
+    AI3["A3: generates tests and synthetic data, selects regression, triages flaky tests"]
+  end
+  R["Requirements<br/>Gate: product owner approves"] --> D["Design - unchanged"]
+  D --> C["Coding<br/>developer owns change, AI-assisted label"]
+  C --> G1{{"Secret scanning + SAST/SCA"}}
+  G1 --> P["Peer review<br/>Gate: code-owner approval<br/>Checkout and payments: human AppSec review"]
+  P --> T["Testing<br/>Gate: QA lead approves suite; regression gate"]
+  T --> S["Security review - mandatory"]
+  S --> L["Release<br/>Gate: release manager; sale-peak freeze"]
+  AI1 -.-> R
+  AI2 -.-> C
+  AI3 -.-> T
+  L --> AUD[("Audit log of AI-assisted changes")]
+  DS["Data safeguards: no secrets, customer data or proprietary code in prompts to unapproved tools"] -.-> AI
+  classDef ai fill:#2a2145,stroke:#a78bfa,color:#ede9fe
+  classDef gate fill:#12301f,stroke:#34d399,color:#d1fae5
+  classDef mand fill:#3a1820,stroke:#fb7185,color:#ffe4e6
+  class AI1,AI2,AI3 ai
+  class R,P,T,L gate
+  class G1,S,AUD mand`;
+function Mermaid({code,id}){
+  const ref=useRef(null); const [err,setErr]=useState(null);
+  useEffect(()=>{ let on=true; if(!window.mermaid){setErr("Mermaid library not loaded (offline?)");return;}
+    mermaid.initialize({startOnLoad:false,theme:"dark",securityLevel:"strict",flowchart:{htmlLabels:true}});
+    mermaid.render(id,code).then(({svg})=>{ if(on&&ref.current) ref.current.innerHTML=svg; }).catch(e=>on&&setErr(String(e.message||e)));
+    return ()=>{on=false}; },[code]);
+  return html`<div className="mer">${err?html`<div className="small">Render error: ${err}</div>`:null}<div ref=${ref}></div></div>`;
+}
+
+/* ================= numbers register ================= */
+const REG=[
+["14 agile product teams","P1, P2, P5, A","G","Fixed starting metric"],
+["220 practitioners","P2, P3, A","G","Fixed starting metric"],
+["One major release every 6 weeks","P2, P4","G","Fixed starting metric"],
+["9 person-days regression per release","P1, P2, P3, P6","G","Fixed starting metric (organisation-wide)"],
+["7 high findings escaped in 2 quarters","P1, P2, P3, P6","G","Fixed starting metric (organisation-wide)"],
+["38% active AI users in pilot","P2, P5, P6","G","Fixed starting metric"],
+["84 active users (≈38% of 220)","A","C","220 × 0.38 = 83.6, rounded"],
+["8.67 releases per year","P3, A","C","52 weeks ÷ 6"],
+["14 escaped high findings per year","A","C","7 per 2 quarters × 2"],
+["2.14 release cycles in 90 days","P6","C","90 ÷ 42 days"],
+["48 pilot practitioners (18 / 14 / 16)","P3, P5, P6","S","Synthetic sizes of the 3 sample teams"],
+["Adoption 17% / 43% / 75% (3 / 6 / 12 active)","P5, A","S","21 of 48 = 44%; other 11 teams 63 of 172 = 37%; total 84 of 220 = 38%"],
+["3.5 of 9 regression person-days per release","P6, A","S","3 sample teams in every release R1–R3 (T3); other 11 teams 5.5"],
+["2.3 vs 3.3 clarification rounds (−30%)","P2","S","T1 means"],
+["Idea-to-ready median 3.5 vs 6.5 days (−46%); non-AI mean 7.5","P2","S","T1"],
+["Requirement-gap defects 0.67 vs 1.6 per story (−58%)","P2","S","T1 (US-06 missing, excluded)"],
+["US-11 outlier: 21 days","P2","S","T1"],
+["Median PR size 340 vs 202.5 lines (+68%)","P2","S","T2, AI-led sprints (share ≥40%) vs others"],
+["Review turnaround 26.0 vs 20.5 h (+27%)","P2","S","T2 means"],
+["Rework 17.6% vs 13.5% (+30%)","P2","S","T2 means"],
+["Outlier sprint: 820-line PRs, 41 h review","A","S","T2 Mobile App S2"],
+["AI-assisted ≈45% of PRs (133 of 297), 6 of 10 findings (60%)","P2","S","T2, T4"],
+["Checkout: 15% of PRs AI-assisted, 4 of 6 findings (67%)","P2","S","T2 (10.75 of 71), T4"],
+["4 of the 7 escaped highs in sample teams","A","S","T4 escaped rows; 3 in other teams"],
+["Catalog & Search regression 0.95 → 0.70 (−26%)","P2","S","T3 R1 vs R3"],
+["Flaky 12.8% vs 9.25% (+38%); escaped defects 1.8 vs 3.0 (−40%)","P2","S","T3"],
+["DevEx: tool fit 2.2 (Checkout) vs 3.9 (Mobile); review load 2.3 (Mobile)","P2","S","T5"],
+["₹30.00 lakh pilot budget","P1, P3, P6","A","Sum of pilot cost lines"],
+["Licences ₹2.88 lakh","P3","C","48 × ₹2,000/month × 3 (rate ASSUMPTION)"],
+["Enablement team ₹13.20 lakh","P3","C","2 FTE × ₹2.2 lakh/month × 3 (rate ASSUMPTION)"],
+["Training time ₹5.76 lakh","P3, P6","C","48 × 8 h × ₹1,500"],
+["Security gates ₹4.00; measurement ₹1.50; contingency ₹2.66 lakh","P3","A","Existing tools configured where possible"],
+["₹12,000 per person-day; ₹1,500 per hour","P3, A","A","Loaded cost, 8-hour day"],
+["Regression cut 15% / 33% / 45% (9 → 7.65 / 6 / 4.95)","P1, P3","A","Conservative / base / optimistic"],
+["Regression value ₹1.40 / 3.12 / 4.21 lakh/yr","P3","C","9 × cut × 8.67 × ₹12,000"],
+["Active users 110 / 132 / 154 (50 / 60 / 70% of 220)","P3","A","At scale"],
+["Net 1 / 2 / 3 h saved per user-week; 44 weeks; 50% realised","P3","A","Net of extra review"],
+["Developer value ₹36.30 / 87.12 / 152.46 lakh/yr","P3","C","users × h × 44 × 0.5 × ₹1,500"],
+["Escaped highs avoided 2 / 6 / 8 per year (7 → 6 / 4 / 3 per 2 quarters)","P1, P3, P6","A","Base target 7 → 4"],
+["₹8 lakh per escaped high finding","P3","A","Fix, hotfix, retest, investigation; excludes fines"],
+["Security value ₹16 / 48 / 64 lakh/yr","P3","C","avoided × ₹8 lakh"],
+["Gross value ₹53.70 / 138.24 / 220.67 lakh/yr","P3","C","Sum of three levers"],
+["Run cost ₹85.20 / 90.48 / 95.76 lakh/yr","P3","C","Licences 26.40 / 31.68 / 36.96 + team 52.80 + tooling 6.00"],
+["Net value ₹−31.50 / 47.76 / 124.91 lakh/yr","P1, P3","C","Gross − run"],
+["Expected net value ₹47.23 lakh/yr","P3","C","Weights 25 / 50 / 25% (ASSUMPTION)"],
+["One-time ₹50.64 lakh (30.00 + scale-up training 20.64)","P3","C","172 × 8 h × ₹1,500 = 20.64"],
+["Payback 12.7 months (base)","P3","C","50.64 ÷ 47.76 × 12"],
+["Pilot regression 3.5 → 2.8 person-days (−20%); organisation 9 → 8.3","P6","A","Day-90 leading indicator"],
+["Review turnaround ≤ baseline +10%","P4, P5, P6","A","Guards against review overload"],
+["Adoption target 60%; experience ≥3.5 of 5","P6","A","Active use = ≥1 AI-assisted merged item per week"],
+["PR size cap 400 changed lines","P4, P6","A","Reviewability rule, never a productivity measure"],
+["10% team capacity","P5, P6","A","Committed by product heads"],
+["Day 1 Mon 7 Dec 2026; gates Tue 5 Jan, Thu 4 Feb, Fri 5 Mar 2027","P1, P5, P6","A","Day 90 is Sat 6 Mar 2027, so Gate 3 is Fri 5 Mar 2027 (Day 89)"],
+["Approvals by Fri 27 Nov, Wed 2 Dec, Fri 4 Dec 2026","P1, P6","A","Before Day 1"],
+["Year-end sale 24–31 Dec 2026; freeze 17 Dec 2026–2 Jan 2027","P5, P6","A","Assumed retail calendar"],
+["Pilot releases Fri 8 Jan and Fri 19 Feb 2027","P5","A","6 weeks apart"],
+["Step times: design 2 days, coding 5 days, security review 3 days, release 1 day","P2, P4 flows","A","Per feature; to be replaced by Day-30 baselines"],
+["To-be targets: requirements 7.5 → 5.0 days; security review 3 → 2 days","P4 flow","A","Earlier criteria and scans reduce late rework"],
+["Handoffs: 4 as-is; 7 to-be (4 human + 3 automated)","P2, P4 flows","C","Counted from the flow edges"],
+];
+
+/* ================= page components ================= */
+function Page({id, n, deliv, title, note, children}){
+  return html`<section className="ch" id=${id} data-ch=${id}><div className="wrap">
+    <div className="eyebrow"><span className="pn">${n}</span><span className="dl">${deliv}</span></div>
+    <h2 className="title">${title}</h2>
+    ${children}
+    ${note && html`<div className="note"><b>Presenter note:</b> ${note}</div>`}
+    <div className="foot"><span>${FILE} · file name is a placeholder; official naming convention to be confirmed</span><span>${n}</span></div>
+  </div></section>`;
+}
+
+/* ---------- P1 Summary ---------- */
+function P1(){
+  const pos=d=>((d-1)/89*100)+"%";
+  return html`<${Page} id="p1" n="1 / 7" deliv="D1 · Engineering Enablement Decision Brief" title=${html`Approve an INR 30 lakh, 90-day governed AI pilot in 3 teams to target <em>9 → 6 regression person-days</em> and <em>7 → 4 escaped high findings</em>`}
+   note="Answer first: a small, governed, tool-agnostic pilot, not a vendor mandate. Every gain is a target under assumptions; the pilot replaces them with real data by 5 Mar 2027.">
+   <${R}><div className="rec">Run governed, tool-agnostic AI assistance for Requirements, Coding and Testing in 3 of our 14 e-commerce teams for 90 days, keeping every security and human approval gate.</div><//>
+   <div className="g3">
+    <${R} d=${80}><div className="kpi"><div className="v"><${Count} to=${9}/><span className="arrow">→</span><span className="to"><${Count} to=${6}/></span></div><div className="l">Regression person-days per release, 12-month target <${Tag} k="G"/><${Tag} k="A"/></div></div><//>
+    <${R} d=${160}><div className="kpi"><div className="v"><${Count} to=${7}/><span className="arrow">→</span><span className="to"><${Count} to=${4}/></span></div><div className="l">Escaped high security findings per 2 quarters, target <${Tag} k="G"/><${Tag} k="A"/></div></div><//>
+    <${R} d=${240}><div className="kpi"><div className="v">₹<${Count} to=${30}/><span style=${{fontSize:"20px",color:"var(--tx2)"}}> lakh</span></div><div className="l">Pilot cost <${Tag} k="A"/> · base-case net value ₹47.76 lakh/yr at scale <${Tag} k="C"/></div></div><//>
+   </div>
+   <${R} d=${200}><div>
+    <div className="line"><span className="k">Top risk</span><span className="t">Insecure AI-generated code reaching checkout. Reduced by automated secret, code and dependency scans (SAST/SCA) on every pull request, plus human AppSec review of all checkout and payment changes.</span></div>
+    <div className="line"><span className="k">The ask</span><span className="t">VP Engineering and Finance approve scope and ₹30 lakh by <b>Fri 27 Nov 2026</b>; CISO approves guardrails by <b>Fri 4 Dec 2026</b>.</span></div>
+    <div className="line"><span className="k">Evidence</span><span className="t">Baselines GIVEN; gains are ASSUMPTION or ILLUSTRATIVE-SYNTHETIC until pilot data arrive.</span></div>
+    <div className="line"><span className="k">90 days</span><span className="t">7 Dec 2026–5 Mar 2027 · 3 teams · 2 releases · continue / adjust / stop gates:</span></div>
+    <div className="mini"><div className="trk"></div>
+     ${[[1,"Start 7 Dec"],[30,"Gate 1 · 5 Jan"],[60,"Gate 2 · 4 Feb"],[89,"Gate 3 · 5 Mar"]].map(([d,l])=>html`<div key=${d} className="m" style=${{left:pos(d)}}><i></i><span>${l}</span></div>`)}</div>
+   </div><//>
+  <//>`;
+}
+
+/* ---------- P2 As-is, analysis, gaps, recommendations ---------- */
+const AN={
+ A1:{name:"A1 Requirements",rows:[
+   ["Clarification rounds","mean, T1",2.3,3.3,"−30%",true,""],
+   ["Idea-to-ready","median days, T1",3.5,6.5,"−46%",true," d"],
+   ["Requirement-gap defects","per story, T1",0.67,1.6,"−58%",true,""]],
+   say:"AI-drafted acceptance criteria cut back-and-forth. Caution: US-11 took 21 days because the AI draft missed a payment-gateway rule — a domain expert still has to approve."},
+ A2:{name:"A2 Coding",rows:[
+   ["PR size","median lines changed, T2",340,202.5,"+68%",false,""],
+   ["Review turnaround","mean hours, T2",26.0,20.5,"+27%",false," h"],
+   ["Rework","mean %, T2",17.6,13.5,"+30%",false,"%"]],
+   say:"AI-led sprints ship bigger changes that take longer to review. AI-assisted code is ≈45% of PRs but 6 of 10 high/medium findings; in Checkout, 15% of PRs but 4 of 6 findings (T4)."},
+ A3:{name:"A3 Testing",rows:[
+   ["Regression effort","Catalog & Search R3 vs R1, person-days, T3",0.70,0.95,"−26%",true,""],
+   ["Flaky tests","mean %, T3",12.8,9.25,"+38%",false,"%"],
+   ["Escaped defects","mean per release, T3",1.8,3.0,"−40%",true,""]],
+   say:"AI test generation cuts regression effort, but unmanaged it breeds flaky tests: Mobile App rose from 14% to 22%. Mobile rates review load 2.3/5; Checkout rates tool fit 2.2/5 (T5)."}
+};
+function Bars({rows}){
+  const [ref,v]=useInView();
+  return html`<div ref=${ref}>${rows.map((r,i)=>{ const mx=Math.max(r[2],r[3]);
+    return html`<div className="bar" key=${i}><div className="n">${r[0]}<small>${r[1]}</small></div>
+     <div className="bars"><div className="bt"><span className="f ai" style=${{width:v?(r[2]/mx*80)+"%":"0%"}}></span>${r[2]}${r[6]}</div>
+       <div className="bt"><span className="f no" style=${{width:v?(r[3]/mx*80)+"%":"0%"}}></span>${r[3]}${r[6]}</div></div>
+     <div className=${"delta "+(r[5]?"good":"bad")}>${r[4]}</div></div>`;})}</div>`;
+}
+function P2(){
+  const [tab,setTab]=useState("A2");
+  return html`<${Page} id="p2" n="2 / 7" deliv="D1 · As-is, analysis, gaps & recommendations" title=${html`AI already speeds requirements and tests, but ungoverned coding inflates PRs <em>68%</em> and reviews <em>27%</em> — four process gaps explain why`}
+   note="The symptoms are in the given metrics; the causes are process gaps a tool alone will not fix. Synthetic data shows the method we will use on real pilot data.">
+   <div className="g2">
+    <${R}><div className="card"><h3 className="h">Facts <${Tag} k="G"/></h3><ul className="b">
+     <li>Retail e-commerce: storefront, mobile app, catalog, search, cart, checkout, payments, promotions, orders</li>
+     <li>14 teams · 220 practitioners · one major release every 6 weeks</li>
+     <li>9 person-days regression per release · 7 high findings escaped in 2 quarters</li>
+     <li>38% active AI users in pilot; generated code has failed security review; flaky tests and duplicated pipelines growing</li></ul></div><//>
+    <${R} d=${100}><div className="card"><h3 className="h">Assumptions <${Tag} k="A"/></h3><ul className="b">
+     <li>Peak sale traffic multiplies the cost of any checkout defect</li>
+     <li>AI use grows with or without governance</li>
+     <li>Existing scanners and pipelines can carry the new gates</li></ul>
+     <p style=${{margin:"10px 0 0",color:"var(--pain)"}}><b>Retail impact example:</b> an AI-written promo rule that double-applies a discount during the year-end sale leaks margin and breaks checkout at peak traffic, when rollback is riskiest.</p></div><//>
+   </div>
+   <${R}><h3 className="h">As-is cross-functional flow (no governed AI) · arrows, handoffs and step times</h3>
+    <${Flow} g=${BF} idp="bf"/>
+    <div className="small" style=${{marginTop:"8px"}}><b style=${{color:"var(--tx2)"}}>Steps:</b> 1 PO writes story by hand (7.5 days idea-to-ready, 3.3 clarification rounds) → handoff → 2 Design (2 days) → 3 Code (5 days) → 4 Peer review (20.5 h; 13.5% rework loops back) → handoff → 5 Full regression (9 person-days per release; flaky 9.25%) → handoff → 6 Late security review (3 days; late findings loop back to coding) → handoff → 7 Release (1 day, every 6 weeks). Orange = pain point. Times ILLUSTRATIVE-SYNTHETIC (T1–T3) or ASSUMPTION (design, coding, security review, release); 9 person-days and 6 weeks GIVEN.</div><//>
+   <${R}><div className="card">
+    <div style=${{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:"10px",marginBottom:"8px"}}>
+     <h3 className="h" style=${{margin:0}}>Analysis · AI-assisted vs not</h3>
+     <div className="seg">${["A1","A2","A3"].map(k=>html`<button key=${k} className=${tab===k?"on":""} onClick=${()=>setTab(k)}>${AN[k].name}</button>`)}</div></div>
+    <${Synth}/>
+    <div className="lg" style=${{margin:"10px 0"}}><span><i className="sw" style=${{background:"var(--ai)"}}></i>AI-assisted</span><span><i className="sw" style=${{background:"#64748b"}}></i>Not AI-assisted</span><span style=${{color:"var(--good)"}}>green = better</span><span style=${{color:"var(--bad)"}}>red = worse</span></div>
+    <${Bars} key=${tab} rows=${AN[tab].rows}/>
+    <p style=${{marginBottom:0}}>${AN[tab].say}</p></div><//>
+   <${R}><div className="card"><h3 className="h">Five insights (each cites its table) <${Tag} k="S"/></h3>
+    <div className="g5">${[
+     ["1","AI-drafted stories need 30% fewer clarification rounds (2.3 vs 3.3) and 58% fewer requirement-gap defects","T1"],
+     ["2","AI test generation cut Catalog & Search regression effort 0.95 → 0.70 person-days (−26%)","T3"],
+     ["3","AI-led sprints: median PR size +68% (340 vs 202.5 lines), review time +27% (26.0 vs 20.5 h)","T2"],
+     ["4","AI-assisted code is ≈45% of PRs but 6 of 10 high/medium findings; in Checkout 15% of PRs, 4 of 6 findings","T2, T4"],
+     ["5","Unmanaged AI tests raised Mobile flaky rate 14% → 22%; Mobile review load 2.3/5, Checkout tool fit 2.2/5","T3, T5"]].map(x=>html`<div key=${x[0]} className="sh"><div style=${{font:"900 22px Inter",color:"var(--cyan)"}}>${x[0]}</div><p style=${{margin:"4px 0",fontSize:"12.5px"}}>${x[1]}</p><span className="pill">${x[2]}</span></div>`)}</div></div><//>
+   <${R}><div className="card" style=${{borderColor:"rgba(251,113,133,.35)"}}><h3 className="h">The trade-off the data reveals</h3>
+    <div className="g3">
+     <div><b style=${{color:"var(--tx)"}}>Pressure 1 · confirmed</b><p>Faster creation raised PR size, review time and AI-sourced findings (T2, T4).</p></div>
+     <div><b style=${{color:"var(--tx)"}}>Pressure 2 · confirmed</b><p>Tool fit scores 2.2 in Checkout vs 3.9 in Mobile (T5): one tool will not fit all.</p></div>
+     <div><b style=${{color:"var(--tx)"}}>Pressure 3 · confirmed</b><p>Regression time saved but flaky tests up 38% (T3): speed without quality is no gain.</p></div></div>
+    <p className="small" style=${{margin:"6px 0 0"}}>Could mislead: 12 stories, 9 sprints, 10 findings; teams differ in risk and work type; outliers (US-11, an 820-line sprint); correlation, not causation. The pilot fixes this with real Day-30 baselines, same-team before/after comparison and a source label on every PR.</p></div><//>
+   <${R}><h3 className="h">Gaps (root causes) → recommendations</h3>
+    <${Table} head=${["Gap (root cause, not symptom)","Evidence","Recommendation"]} rows=${[
+     ["A1 · No definition of ready requiring edge-case, security and non-functional criteria","3.3 rounds, 1.6 requirement-gap defects per story (T1)","AI drafts stories against a standard template; PO approves"],
+     ["A2 · No guardrails, PR size limit or reviewer skills for AI code; security checked late","+68% PR size, +27% review, 60% of findings AI-sourced (T2, T4)","Approved-tool criteria, 400-line cap, scans on every PR, AppSec on checkout"],
+     ["A3 · No flaky-test ownership or risk-based regression; duplicated pipelines","9 person-days per release; flaky 14% → 22% (T3)","Flaky quarantine, AI-selected regression, one reusable pipeline template"],
+     ["All · No baselines; adoption counted by logins","Leaders cannot tell claimed from real gains","Four outcome indicators, baselined by Day 30"]]}/><//>
+  <//>`;
+}
+
+/* ---------- P3 Options ---------- */
+const OPTS=[
+ {id:"O1",nm:"Do nothing · team-by-team",ben:"No spend; teams keep freedom",cost:"Hidden: rework, incidents",dep:"None",risk:"Data leaks, more escaped findings",sc:[85,15,85],best:false},
+ {id:"O2",nm:"Mandate one vendor",ben:"Simple to buy and govern",cost:"High: 220 seats, migration",dep:"Vendor contract, all-team rollout",risk:"Poor fit, lock-in, low use",sc:[45,55,20],best:false},
+ {id:"O3",nm:"Governed, tool-agnostic pilot",ben:"Control plus fit; real evidence before scale",cost:"₹30 lakh, 3 teams, 90 days",dep:"CISO guardrails, max 2 approved tools, metrics",risk:"Slower start; governance effort",sc:[60,80,60],best:true},
+];
+const SCN={cons:{l:"Conservative",g:53.70,r:85.20,n:-31.50,lev:[1.40,36.30,16.00],ass:"15% regression cut · 110 users × 1 h/week · 2 highs avoided"},base:{l:"Base",g:138.24,r:90.48,n:47.76,lev:[3.12,87.12,48.00],ass:"33% regression cut · 132 users × 2 h/week · 6 highs avoided"},opt:{l:"Optimistic",g:220.67,r:95.76,n:124.91,lev:[4.21,152.46,64.00],ass:"45% regression cut · 154 users × 3 h/week · 8 highs avoided"}};
+function P3(){
+  const [s,setS]=useState("base"); const c=SCN[s]; const mx=220.67;
+  const [ref,v]=useInView();
+  const cost=[["Licences",2.88,"#60a5fa"],["Enablement team",13.20,"#a78bfa"],["Training",5.76,"#22d3ee"],["Security gates",4.00,"#fb7185"],["Measurement",1.50,"#2dd4bf"],["Contingency",2.66,"#a3adbf"]];
+  return html`<${Page} id="p3" n="3 / 7" deliv="D1 · Options & recommendation" title=${html`Governed, tool-agnostic AI (<em>O3</em>) is the only option that tests value safely: ₹30 lakh pilot, ₹47.76 lakh/yr base-case net at scale`}
+   note="O3 costs some early speed in exchange for control and fit. It is sized to existing skills: two current engineers and security scanners we already run.">
+   <div className="g3">${OPTS.map((o,i)=>html`<${R} key=${o.id} d=${i*90}><div className=${"opt"+(o.best?" best":"")}>
+     ${o.best && html`<span className="rib">RECOMMENDED</span>`}
+     <div className="nm">${o.id} · ${o.nm}</div>
+     <div className="kv"><b>Benefits</b><span>${o.ben}</span><b>Cost / effort</b><span>${o.cost}</span><b>Depends on</b><span>${o.dep}</span><b>Risks</b><span>${o.risk}</span></div>
+     ${[["Speed","Quality"],["Risk","Cost-safe"],["Control","Fit"]].map((p,k)=>html`<div className="slider" key=${k}><b style=${{font:"700 10px JetBrains Mono,monospace",color:"var(--mu)",textTransform:"uppercase"}}>${["Speed vs quality","Cost vs risk","Control vs fit"][k]}</b>
+       <div><div className="tr"><i style=${{left:o.sc[k]+"%"}}></i></div><div className="ends"><span>${k===0?"speed":k===1?"high risk":"control"}</span><span>${k===0?"quality":k===1?"low risk":"fit"}</span></div></div></div>`)}
+   </div><//>`)}</div>
+   <${R}><div className="g2">
+    <div className="card" style=${{borderColor:"rgba(34,211,238,.4)"}}><h3 className="h">Why O3</h3><p style=${{margin:0}}>The only option that proves value on real data before spending at scale, keeps Security in control, and lets teams use tools that fit their code. Realistic for the budget: 2 existing engineers, no new hires, existing scanners.</p></div>
+    <div className="card" style=${{borderColor:"rgba(251,191,36,.4)"}}><h3 className="h">What we give up</h3><p style=${{margin:0}}>A faster organisation-wide rollout; 11 teams wait until after Gate 3 (5 Mar 2027); some governance effort to approve up to 2 tools instead of 1.</p></div></div><//>
+   <${R}><h3 className="h">How O3 answers each stakeholder</h3><div className="g6">
+    ${[["VP Engineering","Predictable delivery, real gains","Paying for hype","4 outcome indicators; gate on 5 Mar 2027"],["CISO / Security","No new vulnerabilities or data leaks","AI code and prompts leaking data","Approved tools; scans on every PR; human AppSec on checkout"],["Product / Business","Faster features, safe sale events","Checkout failure at a sale peak","Sale-peak freeze; better acceptance criteria"],["QA lead","Stable, trusted regression","More flaky generated tests","Flaky quarantine; QA approves suite"],["Developers","Tools that fit their code","One forced tool; review overload","Choice within approved list; 400-line PR cap"],["Finance","Return on spend","Licence sprawl","Capped ₹30 lakh; scale only on evidence"]].map(r=>html`<div className="sh" key=${r[0]}><div className="r">${r[0]}</div><div className="small" style=${{color:"var(--blue)",marginTop:"4px"}}>Cares about: ${r[1]}</div><div className="f">Fears: ${r[2]}</div><div className="a">→ ${r[3]}</div></div>`)}</div><//>
+   <div className="g2">
+    <${R}><div className="card"><h3 className="h">Pilot cost · ₹30.00 lakh <${Tag} k="A"/></h3>
+     <div className="stack" ref=${ref}>${cost.map(x=>html`<div key=${x[0]} title=${x[0]} style=${{width:v?(x[1]/30*100)+"%":"0%",background:x[2],transition:"width 1s"}}>${x[1]>=4?x[1].toFixed(2):""}</div>`)}</div>
+     <div className="lg" style=${{marginTop:"10px"}}>${cost.map(x=>html`<span key=${x[0]}><i className="sw" style=${{background:x[2]}}></i>${x[0]} ${x[1].toFixed(2)}</span>`)}</div>
+     <p className="small" style=${{marginBottom:0}}>Licences 48 × ₹2,000 × 3 months; team 2 FTE × ₹2.2 lakh × 3; training 48 × 8 h × ₹1,500. Scale-up one-time ₹50.64 lakh incl. pilot; base payback 12.7 months.</p></div><//>
+    <${R} d=${100}><div className="card"><div style=${{display:"flex",justifyContent:"space-between",alignItems:"center",gap:"8px",flexWrap:"wrap"}}><h3 className="h" style=${{margin:0}}>Annual value at scale (₹ lakh)</h3>
+     <div className="seg">${Object.keys(SCN).map(k=>html`<button key=${k} className=${s===k?"on":""} onClick=${()=>setS(k)}>${SCN[k].l}</button>`)}</div></div>
+     <div style=${{marginTop:"12px"}}>
+      ${[["Regression time saved","#60a5fa"],["Developer time (net of review)","#a78bfa"],["Escaped highs avoided","#34d399"]].map((x,i)=>html`<div className="vbar" key=${x[0]}><span style=${{color:"var(--tx2)"}}>${x[0]}</span><span className="f" style=${{width:Math.max(c.lev[i]/mx*100,1)+"%",background:x[1]}}></span><b>${c.lev[i].toFixed(2)}</b></div>`)}
+      <div className="small" style=${{margin:"2px 0 8px"}}>${c.ass} <${Tag} k="A"/></div>
+      <div className="vbar"><span>Gross value <${Tag} k="C"/></span><span className="f" style=${{width:(c.g/mx*100)+"%",background:"linear-gradient(90deg,#0e7490,var(--cyan))"}}></span><b>${c.g.toFixed(2)}</b></div>
+      <div className="vbar"><span>Run cost <${Tag} k="C"/></span><span className="f" style=${{width:(c.r/mx*100)+"%",background:"linear-gradient(90deg,#9f1239,var(--auto))"}}></span><b>${c.r.toFixed(2)}</b></div></div>
+     <div style=${{display:"flex",alignItems:"baseline",gap:"12px",marginTop:"6px"}}><span className="big" style=${{color:c.n<0?"var(--bad)":"var(--good)"}}>${c.n<0?"−":""}₹${Math.abs(c.n).toFixed(2)}</span><span className="small">net lakh per year · expected value across cases ₹47.23 lakh (weights 25/50/25)</span></div>
+     <p className="small" style=${{marginBottom:0}}>Levers: regression time, developer time net of review, escaped highs avoided at ₹8 lakh each. Conservative loses money — the reason for the Day-90 gate. Full workings in the Evidence vault.</p></div><//>
+   </div>
+   <${R}><p className="small" style=${{margin:0}}><b style=${{color:"var(--tx2)"}}>Strength of evidence:</b> baselines <${Tag} k="G"/> high confidence · AI vs non-AI deltas <${Tag} k="S"/> method only · costs and gains <${Tag} k="A"/> low–medium · review-load and late-security patterns <${Tag} k="I"/> medium.</p><//>
+  <//>`;
+}
+
+/* ---------- P4 To-be ---------- */
+function P4(){
+  const [f,setF]=useState("all");
+  const F=[["all","All"],["ai","AI assists"],["human","Human approves"],["auto","Automation enforces"]];
+  return html`<${Page} id="p4" n="4 / 7" deliv="D1 · To-be with human, AI and automation" title=${html`To-be: <em>AI assists at 3 steps</em>, 5 human approvals and 4 automated checks keep control`}
+   note="Use the filter live: show what AI does, then who approves, then what automation enforces. AI only drafts and suggests; named humans decide.">
+   <${R}><div style=${{display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:"10px",marginBottom:"10px"}}>
+     <div className="seg">${F.map(x=>html`<button key=${x[0]} className=${f===x[0]?"on":""} onClick=${()=>setF(x[0])}>${x[1]}</button>`)}</div>
+     <div className="lg"><span><i className="sw" style=${{background:"var(--ai)"}}></i>AI</span><span><i className="sw" style=${{background:"var(--human)"}}></i>Human</span><span><i className="sw" style=${{background:"var(--auto)"}}></i>Automation (mandatory)</span></div></div>
+    <${Flow} g=${AF} filter=${f} idp="af"/><//>
+   <${R}><div className="safe"><b>Data safeguards:</b> approved tools and approved repositories only · no secrets, customer personal data or card data in any prompt · no proprietary code in unapproved tools · every AI-assisted change in the audit log.</div><//>
+   <${R}><div className="g2">
+    <div className="card"><h3 className="h">To-be steps</h3><p style=${{margin:0,fontSize:"13px"}}>1 AI drafts story and criteria → PO approves (target 5.0 days) → handoff → 2 Design unchanged (2 days) → 3 AI suggests code; developer owns change (5 days) → secret scan on commit → 4 SAST/SCA on PR → code owner approves (≤ baseline +10%); checkout and payment PRs also go to human AppSec; changes requested loop back early → handoff → 5 AI proposes tests and regression set; QA lead approves; regression gate must pass (target 6 person-days per release) → handoff → 6 Security review stays mandatory (target 2 days) → handoff → 7 Release manager approves (1 day); audit log records every AI-assisted change.</p></div>
+    <div className="card"><h3 className="h">Human approvals (accountability never moves to AI)</h3><ul className="b">
+     <li><b style=${{color:"var(--human)"}}>Product owner</b> → stories and acceptance criteria</li>
+     <li><b style=${{color:"var(--human)"}}>Code owner</b> → every code change</li>
+     <li><b style=${{color:"var(--human)"}}>AppSec</b> → every checkout and payment change</li>
+     <li><b style=${{color:"var(--human)"}}>QA lead</b> → test suite and regression set</li>
+     <li><b style=${{color:"var(--human)"}}>Release manager</b> → release, with sale-peak freeze</li></ul>
+     <p className="small" style=${{marginBottom:0}}>Human handoffs stay at 4 as today; 3 automated checks are added, so security issues surface at commit and PR instead of at the end.</p></div></div><//>
+   <${R}><h3 className="h">Before → after, per activity</h3><div className="g3">
+    ${[["A1 Requirements","Product owner","Drafts stories, acceptance criteria, edge, security and non-functional cases","PO edits and approves; checks domain rules","Fewer clarification rounds and requirement-gap defects (T1: −30%, −58%)"],
+      ["A2 Coding","Developer, code owner","Suggests code; flags risky changes in review","Developer owns change; code owner and AppSec approve","Review time held ≤ baseline +10% via 400-line cap (T2: +27% unmanaged)"],
+      ["A3 Testing","QA, developers","Generates tests and synthetic data; picks risk-based regression; triages flaky tests","QA lead approves suite; quarantines flaky tests","Regression 9 → 6 person-days per release at 12 months (T3: −26% in one team)"]].map(r=>html`<div className="card" key=${r[0]}>
+      <div style=${{fontWeight:800,fontSize:"15px",marginBottom:"8px"}}>${r[0]}</div>
+      <div className="kv"><b>Who</b><span>${r[1]}</span><b style=${{color:"var(--ai)"}}>AI role</b><span>${r[2]}</span><b style=${{color:"var(--human)"}}>Human role</b><span>${r[3]}</span><b style=${{color:"var(--amber)"}}>Effect</b><span>${r[4]} <${Tag} k="A"/></span></div></div>`)}</div><//>
+   <${R}><h3 className="h">Tool-agnostic guardrails</h3><div className="g3">
+    <div className="card"><b style=${{color:"var(--tx)"}}>Approved-tool criteria</b><ul className="b" style=${{marginTop:"6px"}}><li>No training on our data, no retention</li><li>Single sign-on, admin controls, audit log</li><li>IP indemnity; data stays in approved regions</li></ul></div>
+    <div className="card"><b style=${{color:"var(--tx)"}}>Data classification</b><ul className="b" style=${{marginTop:"6px"}}><li>Restricted — card data, customer personal data, secrets: never in prompts</li><li>Confidential code: approved tools and repos only</li></ul></div>
+    <div className="card"><b style=${{color:"var(--tx)"}}>Review rules</b><ul className="b" style=${{marginTop:"6px"}}><li>AI-assisted label; ≤400 changed lines</li><li>Code-owner approval; human AppSec for checkout and payments</li><li>Secret scan, SAST/SCA, regression gate stay mandatory</li></ul></div></div><//>
+   <${R}><h3 className="h">Top risks · each with response and owner</h3>
+    <${Table} cls="xs" head=${["Risk","Mitigation","Response if it happens","Owner"]} rows=${[
+     ["AI-generated code fails security review","Scans on every PR; secure-prompt guide","Block merge; if escaped, pause AI code in that service until root cause fixed","AppSec lead"],
+     ["Review overload","400-line cap; review assist; reviewer training","If turnaround > baseline +10% for 2 weeks, limit AI to tests","Engineering managers"],
+     ["IP or personal-data leakage","Approved tools only; Restricted data never in prompts","Revoke access; incident process; notify Data Protection Officer","CISO"],
+     ["Vendor lock-in","Tool-agnostic criteria; up to 2 tools; no proprietary formats","Switch at renewal; prompts and templates stay ours","Enablement lead"],
+     ["Vanity productivity metrics","Outcome indicators only; never lines of code or logins","Remove metric; re-baseline at next gate","VP Engineering"],
+     ["Flaky tests mislead AI test selection","Quarantine flaky tests before selection; QA approval","Fall back to full regression for that release","QA lead"]]}/>
+    <p className="small">The brief names six risks, so all six are shown. Dependencies: CISO-approved contracts, pipelines that can run scans, 10% capacity from 3 teams, metrics from repository and test tools.</p><//>
+  <//>`;
+}
+
+/* ---------- P5 D2 plan ---------- */
+const D0=Date.UTC(2026,11,7);
+const day=(y,m,d)=>Math.round((Date.UTC(y,m-1,d)-D0)/864e5)+1;
+const px=d=>((d-1)/89*100);
+function P5(){
+  const acts=[[day(2026,12,11),"Guardrails"],[day(2026,12,14),"A1 starts"],[day(2026,12,16),"Training"],[day(2026,12,18),"Scans live"],[day(2027,1,12),"Checkout A2"],[day(2027,1,22),"Flaky quarantine"],[day(2027,2,19),"Pipeline template"],[day(2027,3,3),"Business case"]];
+  const [ref,v]=useInView();
+  return html`<${Page} id="p5" n="5 / 7" deliv="D2 · 90-Day Engineering Adoption & Quality Plan" title=${html`Pilot 3 of 14 teams over 90 days, with continue / adjust / stop gates on <em>5 Jan</em>, <em>4 Feb</em> and <em>5 Mar 2027</em>`}
+   note="Checkout writes no AI-generated production code during the year-end freeze; it starts with requirements and tests. Day 90 is a Saturday, so Gate 3 is Friday 5 Mar 2027.">
+   <div className="g3" ref=${ref}>${[["Checkout & Payments",18,17,"Low adoption · High risk","Hardest case for security; payments and personal data","var(--auto)"],["Catalog & Search",14,43,"Mid adoption · Medium risk","Typical team; shows whether it scales","var(--cyan)"],["Mobile App",16,75,"High adoption · Medium risk","Tests review load and flaky generated tests","var(--ai)"]].map((t,i)=>html`<${R} key=${t[0]} d=${i*90}><div className="team">
+     <div className="nm">${t[0]}</div><div className="small">${t[1]} practitioners · ${t[3]}</div>
+     <div className="meter"><i style=${{width:v?t[2]+"%":"0%",background:t[5]}}></i></div>
+     <div className="small">AI adoption ${t[2]}% <${Tag} k="S"/></div><p style=${{margin:"8px 0 0",fontSize:"13px"}}>${t[4]}</p></div><//>`)}</div>
+   <${R}><p className="small" style=${{margin:0}}><b style=${{color:"var(--tx2)"}}>Selection criteria:</b> spread of adoption (low, mid, high) · at least one high-risk team · different work types (backend, search, mobile UI) · measurable baseline and 10% capacity · same 6-week release train. Together 21 of 48 active (44%), reconciling to the GIVEN 38% across 220.</p><//>
+   <${R}><div className="card"><h3 className="h">90-day timeline · 7 Dec 2026 → 6 Mar 2027</h3>
+    <div className="tlwrap"><div className="tlinner tl">
+     <div className="tlrow"><span className="lab">Phase</span>
+      <div className="band" style=${{left:"0%",width:px(31)+"%",background:"rgba(34,211,238,.14)",color:"var(--cyan)"}}>Day 1–30 · set up & baseline</div>
+      <div className="band" style=${{left:px(31)+"%",width:(px(61)-px(31))+"%",background:"rgba(167,139,250,.14)",color:"var(--ai)"}}>Day 31–60 · extend</div>
+      <div className="band" style=${{left:px(61)+"%",width:(100-px(61))+"%",background:"rgba(52,211,153,.14)",color:"var(--human)"}}>Day 61–90 · prove & decide</div></div>
+     <div className="tlrow"><span className="lab">Retail</span>
+      <div className="band" style=${{left:px(day(2026,12,17))+"%",width:(px(day(2027,1,2))-px(day(2026,12,17)))+"%",background:"repeating-linear-gradient(45deg,rgba(251,191,36,.18) 0 6px,rgba(251,191,36,.05) 6px 12px)",color:"var(--amber)"}}>Checkout freeze · sale 24–31 Dec</div></div>
+     <div className="tlrow" style=${{height:"40px"}}><span className="lab">Actions</span>
+      <div className="band" style=${{left:px(day(2026,12,11))+"%",width:(px(day(2026,12,18))-px(day(2026,12,11)))+"%",background:"rgba(34,211,238,.18)",color:"var(--cyan)",fontSize:"9.5px"}}>Set-up</div>
+      ${acts.slice(4).map((a,i)=>html`<div key=${i} className="pin" style=${{left:px(a[0])+"%"}}><i style=${{width:"8px",height:"8px"}}></i><span>${a[1]}</span></div>`)}</div>
+     <div className="tlrow" style=${{height:"40px"}}><span className="lab">Gates</span>
+      ${[[30,"Gate 1 · 5 Jan"],[60,"Gate 2 · 4 Feb"],[89,"Gate 3 · 5 Mar"]].map(g=>html`<div key=${g[0]} className="pin g" style=${{left:px(g[0])+"%"}}><i></i><span>${g[1]}</span></div>`)}</div>
+     <div className="tlrow" style=${{height:"40px"}}><span className="lab">Releases</span>
+      ${[[day(2027,1,8),"Release 8 Jan"],[day(2027,2,19),"Release 19 Feb"]].map(g=>html`<div key=${g[0]} className="pin r" style=${{left:px(g[0])+"%"}}><i></i><span>${g[1]}</span></div>`)}</div>
+     <p className="small" style=${{margin:"4px 0 0"}}>Set-up, 11–18 Dec 2026: guardrails (11 Dec), AI story drafting (14 Dec), training (16 Dec), scans live (18 Dec).</p>
+     <div className="axis">${[["7 Dec",1],["1 Jan",day(2027,1,1)],["1 Feb",day(2027,2,1)],["1 Mar",day(2027,3,1)]].map(a=>html`<span key=${a[0]} style=${{left:px(a[1])+"%"}}>${a[0]}</span>`)}</div>
+    </div></div></div><//>
+   <${R}><${Table} cls="xs" head=${["Action","Activity","Owner (role)","Due","Readiness check","Checkpoint","Decision gate"]} rows=${[
+    ["Publish guardrails and approved-tool list (max 2)","All","CISO + Enablement lead","Fri 11 Dec 2026","Contracts with no-training terms","Weekly pilot stand-up","Gate 1"],
+    ["Start AI story drafting (all 3 teams)","A1","Product owners","Mon 14 Dec 2026","Story template agreed","Rounds per story tracked","Gate 1"],
+    ["Train 48 practitioners (1 day, role tracks)","A1–A3","Enablement lead","Wed 16 Dec 2026","Labs ready","≥90% trained","Gate 1"],
+    ["Secret scan, SAST/SCA, AI label, audit log live; AI tests in Search & Mobile","A2, A3","Platform engineering lead; QA lead","Fri 18 Dec 2026","Pipelines in 3 repos","Gates live 3/3","Gate 1"],
+    ["Capture real baselines for 4 indicators","All","Engineering metrics analyst","Tue 5 Jan 2027","Data sources agreed","Baseline report","Gate 1 · Tue 5 Jan 2027"],
+    ["Extend AI coding to Checkout (promotions first) with AppSec review","A2","Checkout eng. manager + AppSec lead","Tue 12 Jan 2027","Freeze lifted 2 Jan","Release 8 Jan measured","Gate 2"],
+    ["Risk-based regression selection; flaky quarantine","A3","QA lead","Fri 22 Jan 2027","Flaky list owned","Flaky % weekly","Gate 2 · Thu 4 Feb 2027"],
+    ["Reusable pipeline template with all gates","A2, A3","Platform engineering lead","Fri 19 Feb 2027","Reviewed by AppSec","Release 19 Feb measured","Gate 3"],
+    ["Refresh business case with real data","All","Enablement lead + Finance partner","Wed 3 Mar 2027","2 releases of data","Scale-up proposal","Gate 3 · Fri 5 Mar 2027"]]}/><//>
+   <div className="g3">${[["Gate 1 · Tue 5 Jan 2027 · VP Eng","Gates live 3/3, ≥90% trained, baselines captured, zero Restricted-data incidents","Any gap: fix within 10 days","Confirmed customer-data, secret or code leak"],
+     ["Gate 2 · Thu 4 Feb 2027 · VP Eng","No escaped high from AI-assisted code; review ≤ baseline +10%","Review or flaky rate worsening: tighten PR cap, add reviewers","Escaped high in checkout with no root cause"],
+     ["Gate 3 · Fri 5 Mar 2027 · VP Eng + CISO","≥3 of 4 indicators on target and security green → scale","2 of 4 on target: extend 6 weeks","Security red, or fewer than 2 on target"]].map((g,i)=>html`<${R} key=${i} d=${i*90}><div className="gate"><div className="d">◆ ${g[0]}</div><p className="c">Continue: ${g[1]}</p><p className="a">Adjust: ${g[2]}</p><p className="s">Stop: ${g[3]}</p></div><//>`)}</div>
+  <//>`;
+}
+
+/* ---------- P6 D2 controls, measures, decisions ---------- */
+function P6(){
+  return html`<${Page} id="p6" n="6 / 7" deliv="D2 · Training, stop rules, indicators & decisions" title=${html`Four outcome indicators, six stop rules and five approvals by <em>4 Dec 2026</em> make the pilot safe to start on <em>7 Dec 2026</em>`}
+   note="90 days is only about 2 release cycles (2.14), so these are leading indicators; security and sale-event outcomes need 2 quarters after scale-up to confirm.">
+   <div className="g4">${[
+     ["Regression effort per release (pilot teams)","3.5","2.8","9 person-days (GIVEN); pilot share 3.5 (SYNTHETIC, real by Day 30)","Pilot share 3.5 → 2.8 (−20%); 9 → 6 is the 12-month target","QA lead","Tagged regression tasks per release",true],
+     ["Escaped high security findings","7","0","7 in 2 quarters (GIVEN)","0 escaped from AI-assisted pilot changes; 100% checkout/payment PRs human-reviewed; 7 → 4 confirmed after 2 quarters","AppSec lead / CISO","Security tracker by source label",false],
+     ["PR review turnaround","base","≤+10%","Baseline to be captured by Day 30 - ASSUMPTION","No worse than baseline +10% as AI share rises","Engineering managers","PR opened → approved timestamps",true],
+     ["Adoption & developer experience","38%","60%","38% active (GIVEN); survey baseline by Day 30 - ASSUMPTION","60% active (≥1 AI-assisted merged item a week); experience ≥3.5 of 5","Enablement lead","Work-item labels + 5-question survey",true]
+    ].map((x,i)=>html`<${R} key=${i} d=${i*80}><div className="ind">
+      <span className=${"lead "+(x[7]?"ld":"lg2")}>${x[7]?"LEADING":"LAGGING · confirm later"}</span>
+      <div className="nm">${x[0]}</div>
+      <div className="bt2"><span className="b0">${x[1]}</span><span style=${{color:"var(--mu)",fontWeight:400}}>→</span><span className="b1">${x[2]}</span></div>
+      <div className="meta"><b>Baseline:</b> ${x[3]}<br/><b>Day-90 target:</b> ${x[4]}<br/><b>Owner:</b> ${x[5]} · <b>Review:</b> Fri 5 Mar 2027<br/><b>How:</b> ${x[6]}</div></div><//>`)}</div>
+   <${R}><p className="small" style=${{margin:0}}>Never measured: lines of code or tool logins. Regressions are caught by the regression gate, escaped-defect tracking and the stop rules below. No sale-event outcome is claimed inside 90 days.</p><//>
+   <div className="s73">
+    <${R}><div className="card"><h3 className="h">Stop / adjust rules</h3>
+     <${Table} cls="xs" head=${["Trigger","Action","Owner"]} rows=${[
+      ["High finding in an AI-assisted PR","Block merge; add pattern to prompt guide; if escaped, pause AI code in that service","AppSec lead"],
+      ["Restricted data in a prompt","Suspend user access; incident process","CISO / Data Protection Officer"],
+      ["Generated test fails 1 in 10 reruns","Quarantine; keep out of regression gate; pause AI tests if team flaky % keeps rising","QA lead"],
+      ["Story needs >3 clarification rounds","Return to PO; no AI criteria without PO sign-off","Product owner"],
+      ["Escaped defects or rework > baseline +20%","Adjust practice; add review","Engineering manager"],
+      ["Review turnaround > baseline +10% for 2 weeks","Cap PR size; limit AI to tests","Engineering manager"]]}/></div><//>
+    <${R} d=${100}><div className="card"><h3 className="h">Training · 8 h each, 48 people</h3><ul className="b">
+     <li><b style=${{color:"var(--tx)"}}>All (4 h):</b> secure prompting; what never goes in a prompt</li>
+     <li><b style=${{color:"var(--tx)"}}>Developers, code owners (4 h):</b> reviewing generated code</li>
+     <li><b style=${{color:"var(--tx)"}}>Product owners (4 h):</b> requirement-prompt hygiene</li>
+     <li><b style=${{color:"var(--tx)"}}>QA (4 h):</b> test-generation hygiene, flaky checks, synthetic data</li></ul>
+     <h3 className="h" style=${{marginTop:"16px"}}>Retail guardrails</h3><ul className="b">
+     <li>Checkout and payment code frozen 7 days before to 2 days after each sale peak</li>
+     <li>Checkout and payment changes always get human security review</li></ul></div><//>
+   </div>
+   <${R}><div className="card"><h3 className="h">Decisions requested</h3>
+    ${[["Fri 27 Nov 2026","VP Engineering","Approve option O3, scope (3 teams, 3 activities, 90 days) and gate criteria"],["Fri 27 Nov 2026","Finance","Release the ₹30 lakh pilot budget"],["Wed 2 Dec 2026","Heads of Product (3 teams)","Commit 10% team capacity"],["Fri 4 Dec 2026","CISO","Approve guardrails, data classification and approved-tool criteria"],["Fri 4 Dec 2026","Data Protection Officer / Legal","Approve tool contract terms: no training, no retention, IP"]].map(a=>html`<div className="ask" key=${a[1]}><span className="dt">${a[0]}</span><span><b style=${{color:"var(--tx)"}}>${a[1]}</b> — ${a[2]}</span></div>`)}
+    <p className="small" style=${{marginBottom:0}}>Next step: Enablement lead runs kick-off on Mon 7 Dec 2026. If an approval slips, the start and gates move by the same number of days.</p></div><//>
+  <//>`;
+}
+
+/* ---------- P7 AI usage ---------- */
+const PEOPLE=[
+ {n:"Manikandan",i:"M",c:"var(--cyan)",role:"Team lead · storyline and presentation",tool:"[Approved enterprise AI assistant]",did:"Used AI to draft the decision pack and build the React presentation",
+  ask:html`Human intervention: asked to update <span className="hi">e-commerce and retail context, 3 sample teams and a cross-functional flowchart</span>; then asked to consolidate 18 pages into 7 logical pages and rebuild it in React as a <span className="hi">non-traditional, visually appealing presentation on a black background</span>.`,
+  fix:"Corrected: retail e-commerce scope, 3 teams, swimlane flows, 7-page structure, dark interactive scroll-story design"},
+ {n:"Kannan",i:"K",c:"var(--ai)",role:"Data and analysis",tool:"[Approved enterprise AI assistant]",did:"Reviewed the synthetic data and analysis",
+  ask:html`Asked to <span className="hi">be specific with synthetic data and the analysis based on it</span>.`,
+  fix:"Corrected: T1–T5 reconcile to the six fixed metrics; AI vs non-AI means, medians and % change computed and re-run"},
+ {n:"Ram M",i:"RM",c:"var(--human)",role:"Deliverable structure",tool:"[Approved enterprise AI assistant]",did:"Reviewed the deliverable format",
+  ask:html`Suggested <span className="hi">2 different deliverables as 2 separate artifacts</span>.`,
+  fix:"Resolved: D1 (pages 1–4) and D2 (pages 5–6) are clearly separated and self-contained, each labelled on every page"},
+ {n:"Ram T",i:"RT",c:"var(--amber)",role:"Deliverable structure",tool:"[Approved enterprise AI assistant]",did:"Reviewed the deliverable format",
+  ask:html`Suggested <span className="hi">keeping it as one consolidated</span> pack.`,
+  fix:"Resolved: one consolidated file for the jury, keeping Ram M's D1 / D2 separation inside it"},
+ {n:"Balaji",i:"B",c:"var(--pink)",role:"Finance and plan checks",tool:"[Approved enterprise AI assistant]",did:"Checked value model and dates",
+  ask:html`Asked for the <span className="hi">arithmetic and calendar to be re-checked</span>.`,
+  fix:"Corrected: kept the negative conservative case; moved Gate 3 from Sat 6 Mar to Fri 5 Mar 2027"},
+];
+function P7(){
+  return html`<${Page} id="p7" n="7 / 7" deliv="How we used AI" title=${html`We used AI to draft and check; <em>all five team members redirected and corrected it</em>, and humans validated every number`}
+   note="The point is the human corrections, not the AI output. Every number on these pages is in the numbers register with its type and source.">
+   <${R}><div className="flow"><span>Initial prompt</span><em>→</em><span>Refinement</span><em>→</em><span>Validation / correction</span><em>→</em><span>Improvement</span></div><//>
+   <${R}><div className="card">
+    <div className="small" style=${{display:"grid",gridTemplateColumns:"52px 1.1fr 1fr 1.3fr",gap:"14px",font:"700 10.5px JetBrains Mono,monospace",color:"var(--cyan)",letterSpacing:".06em",textTransform:"uppercase",paddingBottom:"6px"}}><span></span><span>Team member · AI tool (approved)</span><span>What they did</span><span>Output checked / corrected by humans</span></div>
+    ${PEOPLE.map(p=>html`<div className="person" key=${p.n} style=${{gridTemplateColumns:"52px 1.1fr 1fr 1.3fr"}}>
+      <div className="av" style=${{background:p.c}}>${p.i}</div>
+      <div><div className="who">${p.n}</div><div className="role">${p.role}</div><div className="role">${p.tool}</div></div>
+      <div className="ask2">${p.did}</div>
+      <div><div className="ask2">${p.ask}</div><div className="fix">✔ ${p.fix}</div></div></div>`)}
+   </div><//>
+   <${R}><div className="safe"><b>No confidential, customer, employee or proprietary data was used.</b> All data is synthetic; AI tool names are placeholders for the team to confirm.</div><//>
+  <//>`;
+}
+
+/* ---------- Evidence vault ---------- */
+const TITLES=[
+"Approve an INR 30 lakh, 90-day governed AI pilot in 3 teams to target 9 → 6 regression person-days and 7 → 4 escaped high findings",
+"AI already speeds requirements and tests, but ungoverned coding inflates PRs 68% and reviews 27% — four process gaps explain why",
+"Governed, tool-agnostic AI (O3) is the only option that tests value safely: ₹30 lakh pilot, ₹47.76 lakh/yr base-case net at scale",
+"To-be: AI assists at 3 steps, 5 human approvals and 4 automated checks keep control",
+"Pilot 3 of 14 teams over 90 days, with continue / adjust / stop gates on 5 Jan, 4 Feb and 5 Mar 2027",
+"Four outcome indicators, six stop rules and five approvals by 4 Dec 2026 make the pilot safe to start on 7 Dec 2026",
+"We used AI to draft and check; all five team members redirected and corrected it, and humans validated every number"];
+function DataTable({t,numCols}){
+  const [show,setShow]=useState(false);
+  return html`<div style=${{display:"flex",flexDirection:"column",gap:"10px"}}>
+   <div><button className="btn" onClick=${()=>download(t.name+".csv",toCSV(t))}>Download CSV</button><button className="btn" onClick=${()=>copy(toCSV(t))}>Copy CSV</button><button className="btn" onClick=${()=>setShow(!show)}>${show?"Hide":"Show"} CSV block</button></div>
+   <${Table} cls="xs" head=${t.head} rows=${t.rows} numCols=${numCols||[]}/>
+   ${show && html`<pre className="code">${"```csv\n"+toCSV(t)+"\n```"}</pre>`}</div>`;
+}
+const VAULT={
+ rec:["Reconciliation", ()=>html`<${Synth}/><${Table} cls="xs" head=${["Fixed metric (GIVEN)","How the 3 sample teams relate"]} rows=${[
+   ["14 agile product teams","3 sample teams (Checkout & Payments, Catalog & Search, Mobile App); 11 not sampled"],
+   ["220 practitioners","Sample teams 18 + 14 + 16 = 48; other 11 teams 172"],
+   ["One major release every 6 weeks","T3 covers 3 releases; T2 covers 3 two-week sprints = one release cycle"],
+   ["9 person-days regression per release (organisation-wide)","Sample teams sum to exactly 3.5 in every release (R1 1.75+0.95+0.80; R2 1.80+0.80+0.90; R3 1.85+0.70+0.95); other 11 teams 5.5"],
+   ["7 high findings escaped in 2 quarters (organisation-wide)","4 escaped highs in sample teams (T4 F01–F04); 3 in other teams. T2 flagged 15 in review over 3 sprints: 6 high/medium in T4, 9 low"],
+   ["38% active AI users in pilot","≈84 of 220. Sample 3 + 6 + 12 = 21 of 48 (44%); other teams 63 of 172 (37%); 84 ÷ 220 = 38%"]]}/>
+   <p className="small">Messy on purpose — missing: T1 US-06 defects, T2 Catalog S3 build failures, T3 Mobile R3 test count, T5 Catalog satisfaction. Outliers: US-11 (21 days), Mobile S2 (820 lines, 41 h). Synthetic data illustrates the analysis method; it is NOT evidence of real results.</p>`],
+ t1:["T1 Requirements",()=>html`<${Synth}/><${DataTable} t=${T1} numCols=${[3,4,5,6]}/>`],
+ t2:["T2 Coding",()=>html`<${Synth}/><${DataTable} t=${T2} numCols=${[2,3,4,5,6,7,8]}/><p className="small">PR size measures reviewability risk only, never productivity.</p>`],
+ t3:["T3 Testing",()=>html`<${Synth}/><${DataTable} t=${T3} numCols=${[2,3,4,5]}/>`],
+ t4:["T4 Security",()=>html`<${Synth}/><${DataTable} t=${T4}/>`],
+ t5:["T5 Dev experience",()=>html`<${Synth}/><${DataTable} t=${T5} numCols=${[2,3,4,5,6]}/>`],
+ an:["Step 1 analysis",()=>html`<${Synth}/><${Table} cls="xs" numCols=${[2,3,4,5,6,7]} head=${["Act.","Measure (table)","AI mean","AI median","Non-AI mean","Non-AI median","Δ mean","Δ median"]} rows=${[
+  ["A1","Clarification rounds (T1, n=6 vs 6)","2.33","2.0","3.33","3.0","−30.0%","−33.3%"],["A1","Idea-to-ready days (T1)","6.17","3.5","7.50","6.5","−17.8%","−46.2%"],["A1","…excluding outlier US-11","3.20","3.0","7.50","6.5","−57.3%","−53.8%"],["A1","Requirement-gap defects (T1, non-AI n=5)","0.67","0.5","1.60","1.0","−58.3%","−50.0%"],
+  ["A2","PR size, lines (T2, AI-led n=5 vs 4)","424.0","340","201.3","202.5","+110.7%","+67.9%"],["A2","Review turnaround h (T2)","26.0","24.0","20.5","21.0","+26.8%","+14.3%"],["A2","…excluding outlier Mobile S2","22.3","22.5","20.5","21.0","+8.5%","+7.1%"],["A2","Rework % (T2)","17.6","17.0","13.5","13.5","+30.4%","+25.9%"],
+  ["A3","Regression person-days (T3, n=5 vs 4)","0.83","0.80","1.59","1.78","−47.7%","−54.9%"],["A3","Flaky test % (T3)","12.8","14.0","9.25","10.0","+38.4%","+40.0%"],["A3","Escaped defects (T3)","1.8","2.0","3.0","3.0","−40.0%","−33.3%"]]}/>
+  <p className="small">Security by source (T4): AI-assisted 6 (2 escaped, 4 caught) vs human 4 (2 escaped, 2 caught). AI-assisted ≈45% of PRs (133.05 of 297) but 60% of findings; Checkout 15% of PRs (10.75 of 71) but 67% of findings. "AI-led sprint" = AI share ≥40%. Computed in Python; reproducible from the CSVs. Insights: (1) −30% clarification rounds, T1; (2) −26% regression in Catalog & Search, T3; (3) +68% PR size, +27% review, T2; (4) 60% of findings AI-sourced, T4; (5) flaky 14% → 22% in Mobile, T3.</p>
+  <p className="small">Could mislead → pilot fix: small samples → 2 real releases, all pilot items; selection bias → same-team before/after; team confounding (T2 findings per PR look lower in AI-led sprints only because Checkout is low-AI and high-risk) → source label on every PR; correlation ≠ causation → matched work types and gates; outliers → medians alongside means.</p>`],
+ ev:["Value model",()=>html`<${Table} cls="xs" numCols=${[1,2,3]} head=${["Line","Conservative","Base","Optimistic"]} rows=${[
+  ["Releases per year = 52 ÷ 6 (CALCULATED)","8.67","8.67","8.67"],["Regression cut on 9 person-days (ASSUMPTION)","15% (→ 7.65)","33% (→ 6)","45% (→ 4.95)"],["Person-days saved/yr = 9 × cut × 8.67","11.70","26.01","35.11"],["Regression value @ ₹12,000/day (₹ lakh)","1.40","3.12","4.21"],
+  ["Active users (ASSUMPTION % of 220)","110 (50%)","132 (60%)","154 (70%)"],["Net hours saved per user-week (ASSUMPTION)","1","2","3"],["Hours/yr = users × h × 44 weeks","4,840","11,616","20,328"],["Developer value = hours × 50% × ₹1,500 (₹ lakh)","36.30","87.12","152.46"],
+  ["Escaped highs avoided/yr (14 → 12 / 8 / 6)","2","6","8"],["Security value @ ₹8 lakh (₹ lakh)","16.00","48.00","64.00"],["Gross value (₹ lakh)","53.70","138.24","220.67"],["Licences = users × ₹2,000 × 12","26.40","31.68","36.96"],["Run cost = licences + team 52.80 + tooling 6.00","85.20","90.48","95.76"],["Net value per year (₹ lakh)","−31.50","47.76","124.91"]]}/>
+  <p className="small">Expected net value = 0.25 × (−31.50) + 0.50 × 47.76 + 0.25 × 124.91 = ₹47.23 lakh/yr. One-time = 30.00 + 172 × 8 h × ₹1,500 (20.64) = ₹50.64 lakh. Payback = 50.64 ÷ 47.76 × 12 = 12.7 months. Team run = 2 FTE × ₹2.2 lakh × 12 = 52.80. Budget and skills assumption: 2 existing engineers, existing scanners, no new hires.</p>`],
+ reg:["Numbers register",()=>html`<p className="small">P = main page, A = Evidence vault.</p><${Table} cls="xs" head=${["Number","Where used","Type","Source or basis"]} rows=${REG.map(r=>[r[0],r[1],html`<${Tag} k=${r[2]}/>`,r[3]])}/>`],
+ str:["Evidence & glossary",()=>html`<div className="g2"><${Table} cls="xs" head=${["Claim","Type","Confidence"]} rows=${[
+  ["Six starting metrics","GIVEN","High"],["AI vs non-AI deltas (T1–T5)","ILLUSTRATIVE-SYNTHETIC","Low — method only"],["AI assistance raises PR size, review load and insecure suggestions without guardrails","INDUSTRY PATTERN","Medium (widely reported; no single study relied on)"],["Earlier automated security checks catch issues more cheaply","INDUSTRY PATTERN","Medium–high"],["Cost, hours saved, adoption, value","ASSUMPTION","Low–medium; replaced at Gate 3"],["Targets (9 → 6, 7 → 4, 60%)","ASSUMPTION","Medium; 7 → 4 confirmed only after 2 quarters"]]}/>
+  <p className="small" style=${{lineHeight:1.7}}><b>Glossary.</b> AppSec: application security team · CISO: Chief Information Security Officer · DevEx: developer experience · FTE: full-time equivalent · IP: intellectual property · NFR: non-functional requirement · PO: product owner · PR: pull request (a proposed code change) · QA: quality assurance · SAST: static application security testing (scans our code) · SCA: software composition analysis (scans third-party libraries) · SDLC: software development life cycle · SSO: single sign-on · Flaky test: passes and fails without code changes · Regression test: re-checks old features still work · Lakh = 100,000; crore = 100 lakh.</p></div>`],
+ mer:["Mermaid flows",()=>html`<div className="g2"><div><p><b style=${{color:"var(--tx)"}}>Before</b> <button className="btn" onClick=${()=>copy(MER_BEFORE)}>Copy</button></p><${Mermaid} code=${MER_BEFORE} id="merBefore"/><pre className="code" style=${{marginTop:"10px"}}>${"```mermaid\n"+MER_BEFORE+"\n```"}</pre></div>
+  <div><p><b style=${{color:"var(--tx)"}}>After</b> <button className="btn" onClick=${()=>copy(MER_AFTER)}>Copy</button></p><${Mermaid} code=${MER_AFTER} id="merAfter"/><pre className="code" style=${{marginTop:"10px"}}>${"```mermaid\n"+MER_AFTER+"\n```"}</pre></div></div>`],
+ ill:["Illustration",()=>html`<${Synth}/><div className="g3" style=${{marginTop:"10px"}}>
+  <div className="card"><h3 className="h">1 · Prompt (PO)</h3><p className="small">"Draft acceptance criteria for: a shopper applies one promo code to the cart. Include edge cases, security and non-functional criteria. Context: max one code per order; codes expire; minimum basket ₹999. No customer data included."</p></div>
+  <div className="card"><h3 className="h">2 · Criteria (PO-approved)</h3><ul className="b"><li>Valid code reduces total once; second code rejected</li><li>Expired code shows a clear message</li><li>Basket below ₹999 → not applied</li><li>Code bound to the shopper's own cart (access control)</li><li>Apply responds in under 300 ms at peak (NFR)</li></ul><p className="small">PO fix: price recalculated server-side, never trusted from the client.</p></div>
+  <div className="card"><h3 className="h">3 · Tests (QA-approved)</h3><ul className="b"><li>TC1 valid code → discount once</li><li>TC2 second code → rejected</li><li>TC3 basket ₹998 → not applied</li><li>TC4 other user's cart ID → 403</li><li>TC5 tampered client price → server total wins</li></ul><p className="small">Synthetic test data only.</p></div></div>`],
+ tit:["Page titles",()=>html`<ol className="titles">${TITLES.map((t,i)=>html`<li key=${i}>${t}</li>`)}</ol>`],
+ scr:["3-minute script",()=>html`<div className="script">
+  <p><b>Our ask is simple.</b> Approve a 30-lakh-rupee, 90-day pilot of governed, tool-agnostic AI assistance in three of our fourteen e-commerce teams, starting Monday 7 December. We are not buying one vendor or automating everything. We want to prove, safely, that AI makes delivery better, not just faster.</p>
+  <p><b>Why now?</b> 38 percent of practitioners in the pilot already use AI tools, but unevenly and without shared rules. Generated code has failed security review. 7 high security findings escaped in two quarters. Regression still costs 9 person-days every release. And nobody can tell a claimed gain from a real one, because we count logins, not outcomes.</p>
+  <p><b>What did we find?</b> On synthetic data — to show the method, not to prove results — AI-assisted stories needed 30 percent fewer clarification rounds, and AI test generation cut regression effort in one team by 26 percent. But AI-led coding sprints produced pull requests 68 percent larger and reviews 27 percent slower, and AI-assisted code sat behind 60 percent of security findings. Speed without guardrails moves risk into review and into production.</p>
+  <p><b>So we recommend option three.</b> AI assists at three steps — drafting requirements, suggesting code, generating tests. Five human approvals stay: product owner, code owner, AppSec for every checkout and payment change, QA lead and release manager. Four automated checks stay mandatory: secret scanning, code and dependency scans, the regression gate and an audit log. No customer data, card data or secrets ever go into a prompt.</p>
+  <p><b>The pilot teams</b> are Checkout and Payments, our highest-risk team; Catalog and Search; and Mobile App, our heaviest AI users. Checkout writes no AI-generated production code during the year-end sale freeze.</p>
+  <p><b>We judge success on four indicators:</b> regression effort, escaped high findings, review turnaround and adoption with developer experience. Targets, under stated assumptions: regression from 9 to 6 person-days per release within twelve months, escaped highs from 7 to 4 per two quarters. The base case is 47.76 lakh rupees of net value a year at scale. The conservative case loses money — which is why we decide on real data at day 90.</p>
+  <p><b>Ninety days is only two release cycles,</b> so we will show leading indicators and confirm security results later. Six stop rules let us pause any unsafe practice the same day.</p>
+  <p><b>What we need:</b> VP Engineering and Finance to approve scope and budget by 27 November, and the CISO to approve the guardrails by 4 December. Our next decision is Friday 5 March 2027: scale, adjust or stop.</p></div>`],
+};
+function Vault(){
+  const [k,setK]=useState("rec");
+  return html`<section className="ch" id="vault" data-ch="vault"><div className="wrap">
+    <div className="eyebrow"><span className="pn">Appendix</span><span className="dl">Evidence vault · Step 0 data, Step 1 analysis, register</span></div>
+    <h2 className="title">Every number is traceable: <em>synthetic data, workings and the numbers register</em></h2>
+    <div className="seg">${Object.keys(VAULT).map(x=>html`<button key=${x} className=${k===x?"on":""} onClick=${()=>setK(x)}>${VAULT[x][0]}</button>`)}</div>
+    <div className="card" key=${k}>${VAULT[k][1]()}</div>
+    <div className="foot"><span>${FILE} · file name is a placeholder; official naming convention to be confirmed</span><span>Appendix</span></div>
+  </div></section>`;
+}
+
+/* ================= shell ================= */
+const CH=[["p1","Summary & decision","D1"],["p2","As-is, analysis, gaps & recommendations","D1"],["p3","Options & best choice","D1"],["p4","To-be: human, AI, automation","D1"],["p5","Pilot teams & 90-day plan","D2"],["p6","Indicators, stop rules & decisions","D2"],["p7","How we used AI",""],["vault","Evidence vault",""]];
+function App(){
+  const [act,setAct]=useState("p1"); const [notes,setNotes]=useState(false); const [pr,setPr]=useState(0);
+  useEffect(()=>{
+    const io=new IntersectionObserver(es=>es.forEach(e=>{ if(e.isIntersecting) setAct(e.target.dataset.ch); }),{rootMargin:"-45% 0px -50% 0px"});
+    document.querySelectorAll("section.ch").forEach(s=>io.observe(s));
+    const sc=()=>{ const h=document.documentElement; setPr(h.scrollTop/((h.scrollHeight-h.clientHeight)||1)); };
+    window.addEventListener("scroll",sc,{passive:true});
+    return ()=>{io.disconnect();window.removeEventListener("scroll",sc);};
+  },[]);
+  const go=id=>{ const el=document.getElementById(id); if(el) el.scrollIntoView({behavior:"smooth"}); };
+  useEffect(()=>{ const k=e=>{ const t=e.target.tagName; if(t==="INPUT"||t==="TEXTAREA") return;
+      const i=CH.findIndex(c=>c[0]===act);
+      if(e.key==="ArrowRight"||e.key==="PageDown"||e.key==="j"){e.preventDefault();go(CH[Math.min(i+1,CH.length-1)][0]);}
+      if(e.key==="ArrowLeft"||e.key==="PageUp"||e.key==="k"){e.preventDefault();go(CH[Math.max(i-1,0)][0]);}
+      if(e.key==="n"||e.key==="N") setNotes(v=>!v); };
+    window.addEventListener("keydown",k); return ()=>window.removeEventListener("keydown",k); },[act]);
+  let lastG=null;
+  return html`<div className=${notes?"shownotes":""}>
+   <nav className="rail">
+    <div className="brand"><span>PS04</span> · Secure AI Engineering</div>
+    <div className="brandsub">Tech Decision Pack · retail e-commerce</div>
+    <div className="prog"><i style=${{width:(pr*100)+"%"}}></i></div>
+    ${CH.map((c,i)=>{ const g=c[2]==="D1"?"D1 · Decision Brief":c[2]==="D2"?"D2 · 90-Day Plan":"Method & evidence"; const show=g!==lastG; lastG=g;
+      return [show && html`<div className="grp" key=${"g"+i}>${g}</div>`,
+        html`<div key=${c[0]} className=${"chap"+(act===c[0]?" on":"")} onClick=${()=>go(c[0])}><span className="d">${c[0]==="vault"?"A":i+1}</span><span className="tx">${c[1]}</span></div>`]; })}
+    <div className="tools">
+     <button className=${"tb"+(notes?" on":"")} onClick=${()=>setNotes(!notes)}>Notes</button>
+     <button className="tb" onClick=${()=>window.print()}>PDF</button>
+     <button className="tb" onClick=${()=>TABLES.forEach((t,k)=>setTimeout(()=>download(t.name+".csv",toCSV(t)),k*250))}>CSVs</button>
+     <button className="tb" onClick=${()=>download(FILE.replace(/[\[\]]/g,"")+".html",SOURCE_HTML,"text/html")}>HTML</button>
+    </div>
+    <div className="keys">← → or J / K: move · N: presenter notes</div>
+   </nav>
+   <main><${P1}/><${P2}/><${P3}/><${P4}/><${P5}/><${P6}/><${P7}/><${Vault}/></main>
+  </div>`;
+}
+ReactDOM.createRoot(document.getElementById("root")).render(html`<${App}/>`);
+</script>
+</body>
+</html>
